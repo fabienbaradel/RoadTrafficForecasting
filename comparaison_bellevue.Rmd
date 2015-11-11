@@ -1,0 +1,1285 @@
+---
+title: "TEST"
+author: "Fabien Baradel"
+date: "3 août 2015"
+output: pdf_document
+---
+
+IMPORT DES DONNEES DE PA
+Bellevue
+```{r}
+#Bellevue
+
+#IMPORT DATA FROM PA
+#NAIVE
+NAIVE_SpeedValue_TimeStepXSection_H_1 <- read.csv("~/R/Error/Bellevue/NAIVE/NAIVE_SpeedValue_TimeStepXSection_H_1.csv", header=FALSE)
+NAIVE_SpeedValue_TimeStepXSection_H_2 <- read.csv("~/R/Error/Bellevue/NAIVE/NAIVE_SpeedValue_TimeStepXSection_H_2.csv", header=FALSE)
+NAIVE_SpeedValue_TimeStepXSection_H_3 <- read.csv("~/R/Error/Bellevue/NAIVE/NAIVE_SpeedValue_TimeStepXSection_H_3.csv", header=FALSE)
+NAIVE_SpeedValue_TimeStepXSection_H_4 <- read.csv("~/R/Error/Bellevue/NAIVE/NAIVE_SpeedValue_TimeStepXSection_H_4.csv", header=FALSE)
+NAIVE_SpeedValue_TimeStepXSection_H_5 <- read.csv("~/R/Error/Bellevue/NAIVE/NAIVE_SpeedValue_TimeStepXSection_H_5.csv", header=FALSE)
+NAIVE_SpeedValue_TimeStepXSection_H_6 <- read.csv("~/R/Error/Bellevue/NAIVE/NAIVE_SpeedValue_TimeStepXSection_H_6.csv", header=FALSE)
+
+NAIVE_Y_pred_Bellevue <- array(NA, dim=c(dim(Bellevue_Matrix)[2], nbHorizons, F[2]-F[1]+1),  dimnames = list(
+                                                                              dimnames(Bellevue_Matrix)[[2]],
+                                                                              paste("prévision à",H),
+                                                                              (F[1]:(F[2])
+                                                                              )))
+NAIVE_Y_pred_Bellevue[,1,] <- t(NAIVE_SpeedValue_TimeStepXSection_H_1)
+NAIVE_Y_pred_Bellevue[,2,-1] <- t(NAIVE_SpeedValue_TimeStepXSection_H_2)
+NAIVE_Y_pred_Bellevue[,3,-(1:2)] <- t(NAIVE_SpeedValue_TimeStepXSection_H_3)
+NAIVE_Y_pred_Bellevue[,4,-(1:3)] <- t(NAIVE_SpeedValue_TimeStepXSection_H_4)
+NAIVE_Y_pred_Bellevue[,5,-(1:4)] <- t(NAIVE_SpeedValue_TimeStepXSection_H_5)
+NAIVE_Y_pred_Bellevue[,6,-(1:5)] <- t(NAIVE_SpeedValue_TimeStepXSection_H_6)
+
+#SECTIONS <- (1:600)[-147]
+
+
+result_Bellevue_NAIVE_Bellevue <- result_APE_MAPE(NAIVE_Y_pred_Bellevue[,,], Bellevue_Matrix[,], 2929)
+result_Bellevue_NAIVE_Bellevue$MAPE_local
+
+#kNN Dev
+kNN_DEV_SpeedValue_TimeStepXSection_H_1 <- read.csv("~/R/Error/Bellevue/kNN_DEV/kNN_DEV_SpeedValue_TimeStepXSection_H_1.csv", header=FALSE)
+kNN_DEV_SpeedValue_TimeStepXSection_H_2 <- read.csv("~/R/Error/Bellevue/kNN_DEV/kNN_DEV_SpeedValue_TimeStepXSection_H_2.csv", header=FALSE)
+kNN_DEV_SpeedValue_TimeStepXSection_H_3 <- read.csv("~/R/Error/Bellevue/kNN_DEV/kNN_DEV_SpeedValue_TimeStepXSection_H_3.csv", header=FALSE)
+kNN_DEV_SpeedValue_TimeStepXSection_H_4 <- read.csv("~/R/Error/Bellevue/kNN_DEV/kNN_DEV_SpeedValue_TimeStepXSection_H_4.csv", header=FALSE)
+kNN_DEV_SpeedValue_TimeStepXSection_H_5 <- read.csv("~/R/Error/Bellevue/kNN_DEV/kNN_DEV_SpeedValue_TimeStepXSection_H_5.csv", header=FALSE)
+kNN_DEV_SpeedValue_TimeStepXSection_H_6 <- read.csv("~/R/Error/Bellevue/kNN_DEV/kNN_DEV_SpeedValue_TimeStepXSection_H_6.csv", header=FALSE)
+
+kNN_DEV_Y_pred_Bellevue <- array(NA, dim=c(dim(Bellevue_Matrix)[2], nbHorizons, F[2]-F[1]+1),  dimnames = list(
+                                                                              dimnames(Bellevue_Matrix)[[2]],
+                                                                              paste("prévision à",H),
+                                                                              (F[1]:(F[2])
+                                                                              )))
+kNN_DEV_Y_pred_Bellevue[,1,] <- t(kNN_DEV_SpeedValue_TimeStepXSection_H_1)
+kNN_DEV_Y_pred_Bellevue[,2,-1] <- t(kNN_DEV_SpeedValue_TimeStepXSection_H_2)
+kNN_DEV_Y_pred_Bellevue[,3,-(1:2)] <- t(kNN_DEV_SpeedValue_TimeStepXSection_H_3)
+kNN_DEV_Y_pred_Bellevue[,4,-(1:3)] <- t(kNN_DEV_SpeedValue_TimeStepXSection_H_4)
+kNN_DEV_Y_pred_Bellevue[,5,-(1:4)] <- t(kNN_DEV_SpeedValue_TimeStepXSection_H_5)
+kNN_DEV_Y_pred_Bellevue[,6,-(1:5)] <- t(kNN_DEV_SpeedValue_TimeStepXSection_H_6)
+
+
+result_Bellevue_kNN_DEV_Bellevue <- result_APE_MAPE(kNN_DEV_Y_pred_Bellevue[,,], Bellevue_Matrix[,], 2929)
+result_Bellevue_kNN_DEV_Bellevue$MAPE_mean
+
+#kNN DIRECT
+kNN_DIRECT_SpeedValue_TimeStepXSection_H_1 <- read.csv("~/R/Error/Bellevue/kNN_DIRECT/kNN_DIRECT_SpeedValue_TimeStepXSection_H_1.csv", header=FALSE)
+kNN_DIRECT_SpeedValue_TimeStepXSection_H_2 <- read.csv("~/R/Error/Bellevue/kNN_DIRECT/kNN_DIRECT_SpeedValue_TimeStepXSection_H_2.csv", header=FALSE)
+kNN_DIRECT_SpeedValue_TimeStepXSection_H_3 <- read.csv("~/R/Error/Bellevue/kNN_DIRECT/kNN_DIRECT_SpeedValue_TimeStepXSection_H_3.csv", header=FALSE)
+kNN_DIRECT_SpeedValue_TimeStepXSection_H_4 <- read.csv("~/R/Error/Bellevue/kNN_DIRECT/kNN_DIRECT_SpeedValue_TimeStepXSection_H_4.csv", header=FALSE)
+kNN_DIRECT_SpeedValue_TimeStepXSection_H_5 <- read.csv("~/R/Error/Bellevue/kNN_DIRECT/kNN_DIRECT_SpeedValue_TimeStepXSection_H_5.csv", header=FALSE)
+kNN_DIRECT_SpeedValue_TimeStepXSection_H_6 <- read.csv("~/R/Error/Bellevue/kNN_DIRECT/kNN_DIRECT_SpeedValue_TimeStepXSection_H_6.csv", header=FALSE)
+
+kNN_DIRECT_Y_pred_Bellevue <- array(NA, dim=c(dim(Bellevue_Matrix)[2], nbHorizons, F[2]-F[1]+1),  dimnames = list(
+                                                                              dimnames(Bellevue_Matrix)[[2]],
+                                                                              paste("prévision à",H),
+                                                                              (F[1]:(F[2])
+                                                                              )))
+kNN_DIRECT_Y_pred_Bellevue[,1,] <- t(kNN_DIRECT_SpeedValue_TimeStepXSection_H_1)
+kNN_DIRECT_Y_pred_Bellevue[,2,-1] <- t(kNN_DIRECT_SpeedValue_TimeStepXSection_H_2)
+kNN_DIRECT_Y_pred_Bellevue[,3,-(1:2)] <- t(kNN_DIRECT_SpeedValue_TimeStepXSection_H_3)
+kNN_DIRECT_Y_pred_Bellevue[,4,-(1:3)] <- t(kNN_DIRECT_SpeedValue_TimeStepXSection_H_4)
+kNN_DIRECT_Y_pred_Bellevue[,5,-(1:4)] <- t(kNN_DIRECT_SpeedValue_TimeStepXSection_H_5)
+kNN_DIRECT_Y_pred_Bellevue[,6,-(1:5)] <- t(kNN_DIRECT_SpeedValue_TimeStepXSection_H_6)
+
+
+result_Bellevue_kNN_DIRECT_Bellevue <- result_APE_MAPE(kNN_DIRECT_Y_pred_Bellevue[,,], Bellevue_Matrix[,], 2929)
+result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local
+
+
+online_Bellevue_hist_30$MAPE_mean
+
+#library loading
+library(plyr,ggplot2)
+library(grid)
+library(gridExtra)
+library(matrixStats)
+```
+
+
+APPROCHE GLOBALE: résultats simples (moyennes, médianes, sd, cv)
+```{r}
+#MAPE MEAN
+MAPE_mean_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+MAPE_mean_Bellevue[1,] <- online_Bellevue_hist_30$MAPE_mean
+MAPE_mean_Bellevue[2,] <- result_Bellevue_NAIVE_Bellevue$MAPE_mean
+MAPE_mean_Bellevue[3,] <- result_Bellevue_kNN_DEV_Bellevue$MAPE_mean
+MAPE_mean_Bellevue[4,] <- result_Bellevue_kNN_DIRECT_Bellevue$MAPE_mean
+
+MAPE_mean_Bellevue_df <- adply(MAPE_mean_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=MAPE_mean_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("MAPE globale moyenne (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("MAPE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#RMSE MEAN
+RMSE_mean_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+RMSE_mean_Bellevue[1,] <- online_Bellevue_hist_30$RMSE_mean
+RMSE_mean_Bellevue[2,] <- result_Bellevue_NAIVE_Bellevue$RMSE_mean
+RMSE_mean_Bellevue[3,] <- result_Bellevue_kNN_DEV_Bellevue$RMSE_mean
+RMSE_mean_Bellevue[4,] <- result_Bellevue_kNN_DIRECT_Bellevue$RMSE_mean
+
+RMSE_mean_Bellevue_df <- adply(RMSE_mean_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=RMSE_mean_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("RMSE globale moyenne (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("RMSE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#MAPE MEDIAN
+MAPE_median_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+MAPE_median_Bellevue[1,] <- rowMedians(online_Bellevue_hist_30$MAPE_global, na.rm = T)
+MAPE_median_Bellevue[2,] <- rowMedians(result_Bellevue_NAIVE_Bellevue$MAPE_global, na.rm = T)
+MAPE_median_Bellevue[3,] <- rowMedians(result_Bellevue_kNN_DEV_Bellevue$MAPE_global, na.rm = T)
+MAPE_median_Bellevue[4,] <- rowMedians(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global, na.rm = T)
+
+MAPE_median_Bellevue_df <- adply(MAPE_median_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=MAPE_median_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("MAPE globale médiane (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("MAPE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#RMSE MEDIAN
+RMSE_median_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+RMSE_median_Bellevue[1,] <- rowMedians(online_Bellevue_hist_30$RMSE_global, na.rm = T)
+RMSE_median_Bellevue[2,] <- rowMedians(result_Bellevue_NAIVE_Bellevue$RMSE_global, na.rm = T)
+RMSE_median_Bellevue[3,] <- rowMedians(result_Bellevue_kNN_DEV_Bellevue$RMSE_global, na.rm = T)
+RMSE_median_Bellevue[4,] <- rowMedians(result_Bellevue_kNN_DIRECT_Bellevue$RMSE_global, na.rm = T)
+
+RMSE_median_Bellevue_df <- adply(RMSE_median_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=RMSE_median_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("RMSE globale médiane (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("RMSE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#MAPE SD
+MAPE_sd_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+MAPE_sd_Bellevue[1,] <- rowSds(online_Bellevue_hist_30$MAPE_global, na.rm = T)
+MAPE_sd_Bellevue[2,] <- rowSds(result_Bellevue_NAIVE_Bellevue$MAPE_global, na.rm = T)
+MAPE_sd_Bellevue[3,] <- rowSds(result_Bellevue_kNN_DEV_Bellevue$MAPE_global, na.rm = T)
+MAPE_sd_Bellevue[4,] <- rowSds(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global, na.rm = T)
+
+MAPE_sd_Bellevue_df <- adply(MAPE_sd_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=MAPE_sd_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("Ecart type de la MAPE globale (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("MAPE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#RMSE SD
+RMSE_sd_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+RMSE_sd_Bellevue[1,] <- rowSds(online_Bellevue_hist_30$RMSE_global, na.rm = T)
+RMSE_sd_Bellevue[2,] <- rowSds(result_Bellevue_NAIVE_Bellevue$RMSE_global, na.rm = T)
+RMSE_sd_Bellevue[3,] <- rowSds(result_Bellevue_kNN_DEV_Bellevue$RMSE_global, na.rm = T)
+RMSE_sd_Bellevue[4,] <- rowSds(result_Bellevue_kNN_DIRECT_Bellevue$RMSE_global, na.rm = T)
+
+RMSE_sd_Bellevue_df <- adply(RMSE_sd_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=RMSE_sd_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("Ecart type du RMSE globale (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("RMSE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#MAPE CV
+MAPE_cv_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+MAPE_cv_Bellevue <- MAPE_sd_Bellevue / MAPE_mean_Bellevue 
+
+
+MAPE_cv_Bellevue_df <- adply(MAPE_cv_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=MAPE_cv_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("Coefficient de variation de la MAPE globale (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("Sans unité (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#RMSE CV
+RMSE_cv_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+RMSE_cv_Bellevue <- RMSE_sd_Bellevue / RMSE_mean_Bellevue 
+
+
+RMSE_cv_Bellevue_df <- adply(RMSE_cv_Bellevue, c(1,2))
+
+p1 <- ggplot(data=RMSE_cv_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("Coefficient de variation de la RMSE globale (sur le réseau) en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("Sans unité (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+```
+
+
+APPROCHE GLOBALE: visualisation des densités, fO cumulés (erreurs relatives et absolues relatives)
+```{r}
+##MAPE
+MAPE_Bellevue <- array(0, dim=c(4, 6, 1439), dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                                        H,
+                                                        2930:4368) )
+
+MAPE_Bellevue[1,,] <- online_Bellevue_hist_30$MAPE_global
+MAPE_Bellevue[2,,] <- result_Bellevue_NAIVE_Bellevue$MAPE_global
+MAPE_Bellevue[3,,] <- result_Bellevue_kNN_DEV_Bellevue$MAPE_global
+MAPE_Bellevue[4,,] <- result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global
+
+MAPE_Bellevue_df <- adply(MAPE_Bellevue, c(1,2,3)) #0h30
+str(MAPE_Bellevue_df)
+
+#density
+rows <- which(MAPE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,13))  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("0h30")+ theme(legend.position="top", legend.box = "horizontal")
+
+rows <- which(MAPE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,20))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(MAPE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,20))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(MAPE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,23))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Densités empiriques de la MAPE globale pour différents horizons de prévisions"  )
+
+#cumul function
+rows <- which(MAPE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + stat_ecdf( aes(group=X1, colour = X1), size=1.2)  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("0h30")+ xlim(c(0,22))+ theme(legend.position="top", legend.box = "horizontal")
+p1
+rows <- which(MAPE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(0,18))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(MAPE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(0,20))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(MAPE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(0,23))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Fonctions de repartition empiriques de la MAPE globale pour différents horizons de prévisions"  )
+
+
+##RMSE
+RMSE_Bellevue <- array(0, dim=c(4, 6, 1439), dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                                        H,
+                                                        2930:4368) )
+
+RMSE_Bellevue[1,,] <- online_Bellevue_hist_30$RMSE_global
+RMSE_Bellevue[2,,] <- result_Bellevue_NAIVE_Bellevue$RMSE_global
+RMSE_Bellevue[3,,] <- result_Bellevue_kNN_DEV_Bellevue$RMSE_global
+RMSE_Bellevue[4,,] <- result_Bellevue_kNN_DIRECT_Bellevue$RMSE_global
+
+RMSE_Bellevue_df <- adply(RMSE_Bellevue, c(1,2,3)) #0h30
+str(RMSE_Bellevue_df)
+
+#density
+rows <- which(RMSE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,3.7))  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("0h30")+ theme(legend.position="top", legend.box = "horizontal")
+
+rows <- which(RMSE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,5))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(RMSE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,7))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(RMSE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(0,9))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Densités empiriques de la RMSE globale pour différents horizons de prévisions"  )
+
+#cumul_funct
+rows <- which(RMSE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + stat_ecdf( aes(group=X1, colour = X1), size=1.2)  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("0h30")+ xlim(c(0,3.8))+ theme(legend.position="top", legend.box = "horizontal")
+p1
+rows <- which(RMSE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(0,4.8))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(RMSE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(0,6.5))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(RMSE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(0,8))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Fonctions de repartition empiriques de la RMSE globale pour différents horizons de prévisions"  )
+
+
+```
+
+GLOBAL
+MAPE + ET MPE-
+```{r}
+#mean
+MAPE_plus_minus_Bellevue <- array(0, c(4, 6, 2), dimnames = list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                                        H,
+                                                        c("MAPE+", "MAPE-")))
+
+for(h in 1:6){
+  #online_SVR
+  #MPE+
+  rows <- which(online_Bellevue_hist_30$relative_ERROR[,h,] > 0)
+  MAPE_plus_minus_Bellevue[1,h,1] <- mean(online_Bellevue_hist_30$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MAPE_plus_minus_Bellevue[1,h,2] <- -mean(online_Bellevue_hist_30$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #NAIVE
+  #MPE+
+  rows <- which(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,] > 0)
+  MAPE_plus_minus_Bellevue[2,h,1] <- mean(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MAPE_plus_minus_Bellevue[2,h,2] <- -mean(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #kNN_DIRECT
+  #MPE+
+  rows <- which(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,] > 0)
+  MAPE_plus_minus_Bellevue[4,h,1] <- mean(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MAPE_plus_minus_Bellevue[4,h,2] <- -mean(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #kNN_DEV
+  #MPE+
+  rows <- which(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,] > 0)
+  MAPE_plus_minus_Bellevue[3,h,1] <- mean(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MAPE_plus_minus_Bellevue[3,h,2] <- -mean(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+
+  }
+
+MAPE_plus_minus_Bellevue_df <- adply(MAPE_plus_minus_Bellevue, c(2,1))
+str(MAPE_plus_minus_Bellevue_df)
+colnames(MAPE_plus_minus_Bellevue_df) <- c("X1", "X2", "V1", "V2")
+
+p1 <- ggplot(data=MAPE_plus_minus_Bellevue_df, aes(x=V1, y=V2, group=X2, shape= X2, colour=X2) )
+p1 <- p1 + geom_point(size=4) + ggtitle("Liens en terme de MAPE des vitesses sur et sous estimées en fonction de l'horizon de prévision") + geom_line() + xlab("MAPE sur les vitesses sous-estimées (en %)") + ylab("MAPE sur les vitesses sur-estimées (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) + geom_abline(intercept = 0, slope = 1)+geom_text(aes(label=X1),hjust=0, vjust=1.4, size=5) + xlim(c(3.4,11)) + ylim(c(4,14.5)) + geom_segment(aes(x = 5.5, y = 4.4, xend = 6.1, yend = 6), arrow = arrow(length = unit(0.5, "cm")), colour="black") + annotate("text",x = 7.5, y = 4.3, label = "Bissectrice: prévisions sur et sous estimées ont la même MAPE")
+
+# d=data.frame(x=c(1,20,20, 1,20,1), y=c(1,1,20, 1,20,20), t=c('a', 'a', 'a',  'b', 'b', 'b'))
+# 
+# p1 <- ggplot() + geom_polygon(data=d,mapping=aes(x=x, y=y, group=t, fill=t, aplha=0.9))
+
+p1
+
+#median
+MEDIAN_plus_minus_Bellevue <- array(0, c(4, 6, 2), dimnames = list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                                        H,
+                                                        c("MEDIAN+", "MEDIAN-")))
+
+for(h in 1:6){
+  #online_SVR
+  #MPE+
+  rows <- which(online_Bellevue_hist_30$relative_ERROR[,h,] > 0)
+  MEDIAN_plus_minus_Bellevue[1,h,1] <- median(online_Bellevue_hist_30$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MEDIAN_plus_minus_Bellevue[1,h,2] <- -median(online_Bellevue_hist_30$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #NAIVE
+  #MPE+
+  rows <- which(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,] > 0)
+  MEDIAN_plus_minus_Bellevue[2,h,1] <- median(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MEDIAN_plus_minus_Bellevue[2,h,2] <- -median(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #kNN_DIRECT
+  #MPE+
+  rows <- which(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,] > 0)
+  MEDIAN_plus_minus_Bellevue[4,h,1] <- median(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MEDIAN_plus_minus_Bellevue[4,h,2] <- -median(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #kNN_DEV
+  #MPE+
+  rows <- which(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,] > 0)
+  MEDIAN_plus_minus_Bellevue[3,h,1] <- median(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  MEDIAN_plus_minus_Bellevue[3,h,2] <- -median(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+
+  }
+
+MEDIAN_plus_minus_Bellevue_df <- adply(MEDIAN_plus_minus_Bellevue, c(2,1))
+str(MEDIAN_plus_minus_Bellevue_df)
+colnames(MEDIAN_plus_minus_Bellevue_df) <- c("X1", "X2", "V1", "V2")
+
+p1 <- ggplot(data=MEDIAN_plus_minus_Bellevue_df, aes(x=V1, y=V2, group=X2, shape= X2, colour=X2) )
+p1 <- p1 + geom_point(size=4) + ggtitle("Liens en terme de médianes des erreurs relatives positives et négatives") + geom_line() + xlab("Médianes des erreurs relatives positives (en %)") + ylab("Médianes des erreurs relatives négatives (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) + geom_abline(intercept = 0, slope = 1)+geom_text(aes(label=X1),hjust=.15, vjust=1.4, size=5) + xlim(c(3.4,9.8)) + ylim(c(4,10)) + geom_segment(aes(x = 5, y = 4.1, xend = 4, yend = 4), arrow = arrow(length = unit(0.5, "cm")), colour="black") + annotate("text",x = 7.2, y = 4.3, label = "Bissectrice: les médianes des erreurs relatives positives et négatives sont les mêmes")
+p1
+
+#sd
+sd_plus_minus_Bellevue <- array(0, c(4, 6, 2), dimnames = list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                                        H,
+                                                        c("sd+", "sd-")))
+
+for(h in 1:6){
+  #online_SVR
+  #MPE+
+  rows <- which(online_Bellevue_hist_30$relative_ERROR[,h,] > 0)
+  sd_plus_minus_Bellevue[1,h,1] <- sd(online_Bellevue_hist_30$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  sd_plus_minus_Bellevue[1,h,2] <- sd(online_Bellevue_hist_30$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #NAIVE
+  #MPE+
+  rows <- which(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,] > 0)
+  sd_plus_minus_Bellevue[2,h,1] <- sd(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  sd_plus_minus_Bellevue[2,h,2] <- sd(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #kNN_DIRECT
+  #MPE+
+  rows <- which(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,] > 0)
+  sd_plus_minus_Bellevue[4,h,1] <- sd(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  sd_plus_minus_Bellevue[4,h,2] <- sd(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+  
+  #kNN_DEV
+  #MPE+
+  rows <- which(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,] > 0)
+  sd_plus_minus_Bellevue[3,h,1] <- sd(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,][rows], na.rm = T)
+  #MPE-
+  sd_plus_minus_Bellevue[3,h,2] <- sd(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,][-rows], na.rm = T)
+
+  }
+
+sd_plus_minus_Bellevue_df <- adply(sd_plus_minus_Bellevue, c(2,1))
+str(sd_plus_minus_Bellevue_df)
+colnames(sd_plus_minus_Bellevue_df) <- c("X1", "X2", "V1", "V2")
+
+p1 <- ggplot(data=sd_plus_minus_Bellevue_df, aes(x=V1, y=V2, group=X2, shape= X2, colour=X2) )
+p1 <- p1 + geom_point(size=4) + ggtitle("Liens en terme d'écarts-types des erreurs relatives positives et négatives") + geom_line() + xlab("Ecart type des erreurs relatives positives (en %)") + ylab("Ecart type des erreurs relatives négatives (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) + geom_abline(intercept = 0, slope = 1)+geom_text(aes(label=X1),hjust=0, vjust=1.4, size=5) + geom_segment(aes(x = 5, y = 4.1, xend = 4, yend = 4), arrow = arrow(length = unit(0.5, "cm")), colour="black") + annotate("text",x = 8, y = 4.3, label = "Bissectrice: prévisions sur et sous-estimées ont le même écart-type")+ xlim(c(3.8,11)) + ylim(c(4,22))
+p1
+
+
+
+# 3000-2930+1
+# plot(Bellevue_Matrix[2930:4000, 1], type='l')
+# lines(result_Bellevue_kNN_DIRECT_Bellevue$Y_pred[1,1,1:(4000-2930+1)], col='red')
+```
+
+PLOTS RELATIVE ERRORS
+```{r}
+hours <- c(1,3,4,6)
+
+for(h in 1:4){
+  #online_SVR
+  relative_error_Bellevue[1,h,,] <- online_Bellevue_hist_30$relative_ERROR[,hours[h], ]
+  
+  #NAIVE
+  relative_error_Bellevue[2,h,] <- result_Bellevue_NAIVE_Bellevue$relative_ERROR[,hours[h], ]
+  
+  #kNN_DIRECT
+  #MPE+
+  relative_error_Bellevue[3,h,] <- result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,hours[h], ]
+  
+  #kNN_DEV
+  relative_error_Bellevue[4,h,] <- result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,hours[h], ]
+}
+
+par(mfrow=c(1,1))
+#30 min
+h <- 1
+n <- 10000
+plot(density(c(online_Bellevue_hist_30$relative_ERROR[,h,]),na.rm =T, n=n), xlim=c(-10,8), ylim=c(0.015, 0.15), ylab="Densité", col='red', main = "Densités empiriques selon la méthode de prévision à 0h30", xlab="Erreur relative  (en %)")
+lines(density(c(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,]),na.rm =T, n=n) , col='chartreuse3') 
+lines(density(c(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,]),na.rm =T,  n=n) , col='darkorchid')
+lines(density(c(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,]), na.rm =T, n=n) , col='aquamarine2')
+legend(-9, .12, c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),  lty=c(1,1), lwd=c(2,2), col=c('red', 'chartreuse3','aquamarine2', 'darkorchid'))
+
+#1h30 min
+h <- 2
+n <- 10000
+plot(density(c(online_Bellevue_hist_30$relative_ERROR[,h,]),na.rm =T, n=n), xlim=c(-8,9), ylim=c(0.015, 0.11), ylab="Densité", col='red', main = "Densités empiriques selon la méthode de prévision à 1h30", xlab="Erreur relative (en %)")
+lines(density(c(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,]),na.rm =T, n=n) , col='chartreuse3') 
+lines(density(c(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,]),na.rm =T,  n=n) , col='darkorchid')
+lines(density(c(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,]), na.rm =T, n=n) , col='aquamarine2')
+legend(-8, .08, c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),  lty=c(1,1), lwd=c(2,2), col=c('red', 'chartreuse3','aquamarine2', 'darkorchid'))
+
+
+#2h
+h <- 4
+n <- 10000
+plot(density(c(online_Bellevue_hist_30$relative_ERROR[,h,]),na.rm =T, n=n), xlim=c(-8,14), ylim=c(0.01, 0.067), ylab="Densité", col='red', main = "Densités empiriques selon la méthode de prévision à 2h", xlab="Erreur relative (en %)")
+lines(density(c(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,]),na.rm =T, n=n) , col='chartreuse3') 
+lines(density(c(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,]),na.rm =T,  n=n) , col='darkorchid')
+lines(density(c(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,]), na.rm =T, n=n) , col='aquamarine2')
+legend(6, .06, c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),  lty=c(1,1), lwd=c(2,2), col=c('red', 'chartreuse3','aquamarine2', 'darkorchid'))
+
+
+#3h
+h <- 6
+n <- 10000
+plot(density(c(online_Bellevue_hist_30$relative_ERROR[,h,]),na.rm =T, n=n), xlim=c(-9,20), ylim=c(0.01, 0.05), ylab="Densité", col='red', main = "Densités empiriques selon la méthode de prévision à 3h", xlab="Erreur relative (en %)")
+lines(density(c(result_Bellevue_NAIVE_Bellevue$relative_ERROR[,h,]),na.rm =T, n=n) , col='chartreuse3') 
+lines(density(c(result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR[,h,]),na.rm =T,  n=n) , col='darkorchid')
+lines(density(c(result_Bellevue_kNN_DEV_Bellevue$relative_ERROR[,h,]), na.rm =T, n=n) , col='aquamarine2')
+legend(11, .04, c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),  lty=c(1,1), lwd=c(2,2), col=c('red', 'chartreuse3','aquamarine2', 'darkorchid'))
+
+
+```
+
+
+NOMBRE DE PAS DE TEMPS PAR METHODE
+```{r}
+#COUNT HOW MANY LOWEST GLOBAL EACH METHOD GETS
+  
+  lowest_global_MAPE <- array(0, dim=c(nbHorizons, 4, 1439), dimnames=(list(H,
+                                                         c("CACO-SVR",
+                                                           "Naive",
+                                                           "kNN_DIRECT",
+                                                           "kNN_DEV"),
+                                                         2930:4368)))
+  for(h in 1:nbHorizons){
+    for(i in h:1439){
+      if(online_Bellevue_hist_30$MAPE_global[h,i] < result_Bellevue_NAIVE_Bellevue$MAPE_global[h,i]
+         & online_Bellevue_hist_30$MAPE_global[h,i] < result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[h,i]
+         & online_Bellevue_hist_30$MAPE_global[h,i] < result_Bellevue_kNN_DEV_Bellevue$MAPE_global[h,i]){
+        lowest_global_MAPE[h,1,i]  <- 1
+      } else if(result_Bellevue_NAIVE_Bellevue$MAPE_global[h,i] < result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[h,i]
+         & result_Bellevue_NAIVE_Bellevue$MAPE_global[h,i] < online_Bellevue_hist_30$MAPE_global[h,i]
+         & result_Bellevue_NAIVE_Bellevue$MAPE_global[h,i] < result_Bellevue_kNN_DEV_Bellevue$MAPE_global[h,i]){
+        lowest_global_MAPE[h,2,i]  <- 1
+      } else if(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[h,i] < online_Bellevue_hist_30$MAPE_global[h,i]
+         & result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[h,i] < result_Bellevue_kNN_DEV_Bellevue$MAPE_global[h,i]
+         & result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[h,i] < result_Bellevue_NAIVE_Bellevue$MAPE_global[h,i]){
+        lowest_global_MAPE[h,3,i]  <- 1
+      } else if(result_Bellevue_kNN_DEV_Bellevue$MAPE_global[h,i] < online_Bellevue_hist_30$MAPE_global[h,i]
+         &result_Bellevue_kNN_DEV_Bellevue$MAPE_global[h,i] < result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[h,i]
+         & result_Bellevue_kNN_DEV_Bellevue$MAPE_global[h,i] < result_Bellevue_NAIVE_Bellevue$MAPE_global[h,i]){
+        lowest_global_MAPE[h,4,i]  <- 1
+      } 
+    }
+    }
+  
+  lowest_global_MAPE_sum <- matrix(0, 4, 6, dimnames=list(c("CACO-SVR",
+                                                           "Naive",
+                                                           "kNN_DEV",
+                                                           "kNN_DIRECT"),
+                                                          H))
+  lowest_global_MAPE_sum[1,] <- rowSums(lowest_global_MAPE[,1,])
+  lowest_global_MAPE_sum[2,] <- rowSums(lowest_global_MAPE[,2,])
+  lowest_global_MAPE_sum[3,] <- rowSums(lowest_global_MAPE[,4,])
+  lowest_global_MAPE_sum[4,] <- rowSums(lowest_global_MAPE[,3,])
+  
+  
+  lowest_global_MAPE_sum_df <- adply(lowest_global_MAPE_sum, c(1,2))
+  str(lowest_global_MAPE_sum_df)
+  head(lowest_global_MAPE_sum_df)
+
+  p1 <- ggplot(data=lowest_global_MAPE_sum_df, aes(x=X2, y=V1, group=X1, shape= X1, colour=X1) )
+  p1 <- p1 + geom_point(size=4) + geom_line() + ggtitle("Nombre de pas de temps obtenant la meilleure prévision selon les différentes méthodes") +   geom_line() + xlab("Horizon de prévision") + ylab("Nombre de pas de temps avec la meilleure prévision") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)
+  p1
+  
+```
+
+LOCAL (par section)
+MEDIAN, SD
+```{r}
+#MAPE MEDIAN
+MAPE_median_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+MAPE_median_Bellevue[1,] <- colMedians(online_Bellevue_hist_30$MAPE_local, na.rm = T)
+MAPE_median_Bellevue[2,] <- colMedians(result_Bellevue_NAIVE_Bellevue$MAPE_local, na.rm = T)
+MAPE_median_Bellevue[3,] <- colMedians(result_Bellevue_kNN_DEV_Bellevue$MAPE_local, na.rm = T)
+MAPE_median_Bellevue[4,] <- colMedians(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local, na.rm = T)
+
+MAPE_median_Bellevue_df <- adply(MAPE_median_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=MAPE_median_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("MAPE locale médiane en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("MAPE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#RMSE MEDIAN
+RMSE_median_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+RMSE_median_Bellevue[1,] <- colMedians(online_Bellevue_hist_30$RMSE_local, na.rm = T)
+RMSE_median_Bellevue[2,] <- colMedians(result_Bellevue_NAIVE_Bellevue$RMSE_local, na.rm = T)
+RMSE_median_Bellevue[3,] <- colMedians(result_Bellevue_kNN_DEV_Bellevue$RMSE_local, na.rm = T)
+RMSE_median_Bellevue[4,] <- colMedians(result_Bellevue_kNN_DIRECT_Bellevue$RMSE_local, na.rm = T)
+
+RMSE_median_Bellevue_df <- adply(RMSE_median_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=RMSE_median_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("RMSE locale médiane en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("RMSE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#MAPE SD
+MAPE_sd_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+MAPE_sd_Bellevue[1,] <- colSds(online_Bellevue_hist_30$MAPE_local, na.rm = T)
+MAPE_sd_Bellevue[2,] <- colSds(result_Bellevue_NAIVE_Bellevue$MAPE_local, na.rm = T)
+MAPE_sd_Bellevue[3,] <- colSds(result_Bellevue_kNN_DEV_Bellevue$MAPE_local, na.rm = T)
+MAPE_sd_Bellevue[4,] <- colSds(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local, na.rm = T)
+
+MAPE_sd_Bellevue_df <- adply(MAPE_sd_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=MAPE_sd_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("Ecart type de la MAPE locale en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("MAPE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+
+#RMSE SD
+RMSE_sd_Bellevue <- matrix(0, 4, 6, dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                           H) )
+RMSE_sd_Bellevue[1,] <- colSds(online_Bellevue_hist_30$RMSE_local, na.rm = T)
+RMSE_sd_Bellevue[2,] <- colSds(result_Bellevue_NAIVE_Bellevue$RMSE_local, na.rm = T)
+RMSE_sd_Bellevue[3,] <- colSds(result_Bellevue_kNN_DEV_Bellevue$RMSE_local, na.rm = T)
+RMSE_sd_Bellevue[4,] <- colSds(result_Bellevue_kNN_DIRECT_Bellevue$RMSE_local, na.rm = T)
+
+RMSE_sd_Bellevue_df <- adply(RMSE_sd_Bellevue, c(1,2))
+
+col <- c("black", "red", "green", "blue")
+p1 <- ggplot(data=RMSE_sd_Bellevue_df, aes(x=X2, y=V1, colour=X1, shape=X1, group = X1))
+p1 <- p1 + geom_point(size=3) + ggtitle("Ecart type du RMSE locale en fonction des horizons de prévison") + geom_line() + xlab("Horizon de prévision") + ylab("RMSE (en %)") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) 
+p1 
+```
+
+LOCAL DENSITIES, CUMUL FUNCT (MAPE, RMSE)
+```{r}
+sec <- 1:600
+sec <- sec[-147]
+
+##MAPE
+MAPE_Bellevue <- array(0, dim=c(4, 6, 599), dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                                        H,
+                                                        sec) )
+
+MAPE_Bellevue[1,,] <- online_Bellevue_hist_30$MAPE_local
+MAPE_Bellevue[2,,] <- result_Bellevue_NAIVE_Bellevue$MAPE_local
+MAPE_Bellevue[3,,] <- result_Bellevue_kNN_DEV_Bellevue$MAPE_local
+MAPE_Bellevue[4,,] <- result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local
+
+MAPE_Bellevue_df <- adply(MAPE_Bellevue, c(1,2,3)) #0h30
+str(MAPE_Bellevue_df)
+
+#density
+rows <- which(MAPE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(2,15))  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("0h30") + theme(legend.position="top", legend.box = "horizontal")
+
+rows <- which(MAPE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(1,20))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(MAPE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(1,18))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(MAPE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(1,20))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Densités empiriques de la MAPE locale pour différents horizons de prévisions"  )
+
+#cumul function
+rows <- which(MAPE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + stat_ecdf( aes(group=X1, colour = X1), size=1.2)  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("0h30")+ xlim(c(3,17))+ theme(legend.position="top", legend.box = "horizontal")
+p1
+rows <- which(MAPE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(2.5,17))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(MAPE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(2.5,18))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(MAPE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=MAPE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(2.5,19))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("MAPE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Fonctions de repartition empiriques de la MAPE locale pour différents horizons de prévisions"  )
+
+
+##RMSE
+RMSE_Bellevue <- array(0, dim=c(4, 6, 599), dimnames=list(c("online-SVR", "NAIVE", "kNN_DEV", "kNN_DIRECT"),
+                                                        H,
+                                                        sec) )
+
+RMSE_Bellevue[1,,] <- online_Bellevue_hist_30$RMSE_local
+RMSE_Bellevue[2,,] <- result_Bellevue_NAIVE_Bellevue$RMSE_local
+RMSE_Bellevue[3,,] <- result_Bellevue_kNN_DEV_Bellevue$RMSE_local
+RMSE_Bellevue[4,,] <- result_Bellevue_kNN_DIRECT_Bellevue$RMSE_local
+
+RMSE_Bellevue_df <- adply(RMSE_Bellevue, c(1,2,3)) #0h30
+str(RMSE_Bellevue_df)
+
+#density
+rows <- which(RMSE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(.7,6))  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("0h30") + theme(legend.position="top", legend.box = "horizontal")
+
+rows <- which(RMSE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(.5,6))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(RMSE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(.5,6))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(RMSE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + geom_density( aes(group=X1, colour = X1, fill= X1), alpha=0.1, size=1.2, adjust=1 ) + xlim(c(.1,7.5))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Densités empiriques de la RMSE locale pour différents horizons de prévisions"  )
+
+#cumul_funct
+rows <- which(RMSE_Bellevue_df$X2=="0h30")
+p1 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p1 <- p1 + stat_ecdf( aes(group=X1, colour = X1), size=1.2)  + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("0h30")+ xlim(c(1,4.5)) + theme(legend.position="top", legend.box = "horizontal")
+p1
+rows <- which(RMSE_Bellevue_df$X2=="1h30")
+p3 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p3 <- p3 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(1,4.5))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("1h30")
+
+rows <- which(RMSE_Bellevue_df$X2=="2h00")
+p4 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p4 <- p4 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(1,6.5))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("2h00")
+
+rows <- which(RMSE_Bellevue_df$X2=="3h00")
+p6 <- ggplot(data=RMSE_Bellevue_df[rows,], aes(x=V1) )
+p6 <- p6 + stat_ecdf( aes(group=X1, colour = X1, fill= X1), size=1.2 ) + xlim(c(1,7))  + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ scale_fill_discrete(guide=FALSE) + xlab("RMSE (en %)") + ylab("Densité")+ ggtitle("3h00")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Fonctions de repartition empiriques de la RMSE locale pour différents horizons de prévisions"  )
+
+```
+
+NB SECTION PAR METHODE
+
+```{r}
+#COUNT HOW MANY LOWEST GLOBAL EACH METHOD GETS
+  
+  lowest_local_MAPE <- array(0, dim=c(nbHorizons, 4, 599), dimnames=(list(H,
+                                                         c("CACO-SVR",
+                                                           "Naive",
+                                                           "kNN_DIRECT",
+                                                           "kNN_DEV"),
+                                                         sec)))
+  for(h in 1:599){
+    for(i in 1:6){
+      if(online_Bellevue_hist_30$MAPE_local[h,i] < result_Bellevue_NAIVE_Bellevue$MAPE_local[h,i]
+         & online_Bellevue_hist_30$MAPE_local[h,i] < result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local[h,i]
+         & online_Bellevue_hist_30$MAPE_local[h,i] < result_Bellevue_kNN_DEV_Bellevue$MAPE_local[h,i]){
+        lowest_local_MAPE[i,1,h]  <- 1
+      } else if(result_Bellevue_NAIVE_Bellevue$MAPE_local[h,i] < result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local[h,i]
+         & result_Bellevue_NAIVE_Bellevue$MAPE_local[h,i] < online_Bellevue_hist_30$MAPE_local[h,i]
+         & result_Bellevue_NAIVE_Bellevue$MAPE_local[h,i] < result_Bellevue_kNN_DEV_Bellevue$MAPE_local[h,i]){
+        lowest_local_MAPE[i,2,h]  <- 1
+      } else if(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local[h,i] < online_Bellevue_hist_30$MAPE_local[h,i]
+         & result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local[h,i] < result_Bellevue_kNN_DEV_Bellevue$MAPE_local[h,i]
+         & result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local[h,i] < result_Bellevue_NAIVE_Bellevue$MAPE_local[h,i]){
+        lowest_local_MAPE[i,3,h]  <- 1
+      } else if(result_Bellevue_kNN_DEV_Bellevue$MAPE_local[h,i] < online_Bellevue_hist_30$MAPE_local[h,i]
+         &result_Bellevue_kNN_DEV_Bellevue$MAPE_local[h,i] < result_Bellevue_kNN_DIRECT_Bellevue$MAPE_local[h,i]
+         & result_Bellevue_kNN_DEV_Bellevue$MAPE_local[h,i] < result_Bellevue_NAIVE_Bellevue$MAPE_local[h,i]){
+        lowest_local_MAPE[i,4,h]  <- 1
+      } 
+    }
+    }
+  
+  lowest_local_MAPE_sum <- matrix(0, 4, 6, dimnames=list(c("CACO-SVR",
+                                                           "Naive",
+                                                           "kNN_DEV",
+                                                           "kNN_DIRECT"),
+                                                          H))
+  lowest_local_MAPE_sum[1,] <- rowSums(lowest_local_MAPE[,1,])
+  lowest_local_MAPE_sum[2,] <- rowSums(lowest_local_MAPE[,2,])
+  lowest_local_MAPE_sum[3,] <- rowSums(lowest_local_MAPE[,4,])
+  lowest_local_MAPE_sum[4,] <- rowSums(lowest_local_MAPE[,3,])
+  
+  
+  lowest_local_MAPE_sum_df <- adply(lowest_local_MAPE_sum, c(1,2))
+  str(lowest_local_MAPE_sum_df)
+  head(lowest_local_MAPE_sum_df)
+
+  p1 <- ggplot(data=lowest_local_MAPE_sum_df, aes(x=X2, y=V1, group=X1, shape= X1, colour=X1) )
+  p1 <- p1 + geom_point(size=4) + geom_line() + ggtitle("Nombre de sections obtenant la meilleure prévision par méthode") +   geom_line() + xlab("Horizon de prévision") + ylab("Nombre sections avec la meilleure prévision") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)
+  p1
+  
+  #############################################################
+  
+#   whichDate(49+32)
+#   #12->20 morning peak 6-10
+#   
+  whichDate(3310)
+  plot(Bellevue_Matrix[3073:3350,1], type='l')
+  lines(result_Bellevue_kNN_DIRECT_Bellevue$Y_pred[1,6,(3073-2930+1):((3073-2930+1)+3350-3073)], col='violet')
+   #lines(result_Bellevue_NAIVE_Bellevue$Y_pred[1,1,(3073-2930+1):((3073-2930+1)+3250-3073+1)], col='blue')
+  lines(online_Bellevue_hist_30$Y_pred[1,3,(3073-2930+1):((3073-2930+1)+3350-3073)], col='red')
+  dim(result_Bellevue_NAIVE_Bellevue$Y_pred)
+  
+  mat_ex <- matrix(NA, 3, length(3115:3310), dimnames= list(c("Vitesses réelles", "Prévisions kNN-DIRECT à 3 heures",
+                                                              "Prévisions online-SVR à 1h30"),
+                                                            3115:3310) )
+  mat_ex[1,] <- Bellevue_Matrix[3115:3310,1]
+  mat_ex[2,] <- result_Bellevue_kNN_DIRECT_Bellevue$Y_pred[1,6,(3115-2930+1):((3115-2930+1)+3310-3115)]
+  mat_ex[3,] <- online_Bellevue_hist_30$Y_pred[1,3,(3115-2930+1):((3115-2930+1)+3310-3115)]
+  
+  mat_ex_df <- adply(mat_ex, c(1,2))
+  str(mat_ex_df)
+  
+  p1 <- ggplot(data=mat_ex_df, aes(x=X2, y=V1, group=X1, shape= X1, colour=X1) )
+  p1 <- p1 + geom_line(size=1) + ggtitle("Prévisions sur la section 1 de la zone du centre-ville") + xlab("Instant") + ylab("Vitesse en km/h") + scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE) + theme(legend.position="top", legend.box = "horizontal")
+  p1
+  
+  
+```
+
+
+VISU TEMPORELLE
+```{r}
+##########
+#per week#
+##########
+
+#MEAN
+MAPE_per_day <- array(NA, dim=c(4, 6, 30), dimnames=list( c("CACO-SVR", "Naive", "kNN_DEV", "kNN_DIRECT"),
+                                                            H,
+                                                            1:30)
+                      )
+
+MAPE_per_day[1, , 1] <- rowMeans(online_Bellevue_hist_30$MAPE_global[,1:47], na.rm = T)
+MAPE_per_day[2, , 1] <- rowMeans(result_Bellevue_NAIVE_Bellevue$MAPE_global[,1:47], na.rm = T) #naive
+MAPE_per_day[4, , 1] <- rowMeans(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[,1:47], na.rm = T) #knn_direct
+MAPE_per_day[3, , 1] <- rowMeans(result_Bellevue_kNN_DEV_Bellevue$MAPE_global[,1:47], na.rm = T) #knn_dev
+for(i in 1:29){
+  MAPE_per_day[1, , i+1] <- rowMeans(online_Bellevue_hist_30$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #svr
+  MAPE_per_day[2, , i+1] <- rowMeans(result_Bellevue_NAIVE_Bellevue$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #naive
+  MAPE_per_day[4, , i+1] <- rowMeans(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #knn_direct
+  MAPE_per_day[3, , i+1] <- rowMeans(result_Bellevue_kNN_DEV_Bellevue$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #knn_dev
+}
+
+MAPE_per_day_df <- adply(MAPE_per_day, c(1,2,3) )
+str(MAPE_per_day_df)
+
+#0h30
+rows <- which(MAPE_per_day_df$X2 ==  "0h30")
+p1 <- ggplot(data=MAPE_per_day_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p1 <- p1 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 0h30") +   geom_line() + xlab("Jour du mois de novembre") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")
+p1
+
+#1h30
+rows <- which(MAPE_per_day_df$X2 ==  "1h30")
+p3 <- ggplot(data=MAPE_per_day_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p3 <- p3 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 1h30") +   geom_line() + xlab("Jour du mois de novembre") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p3
+
+#2h
+rows <- which(MAPE_per_day_df$X2 ==  "2h00")
+p4 <- ggplot(data=MAPE_per_day_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p4 <- p4 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 2h") +   geom_line() + xlab("Jour du mois de novembre") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p4
+
+#3h
+rows <- which(MAPE_per_day_df$X2 ==  "3h00")
+p6 <- ggplot(data=MAPE_per_day_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p6 <- p6 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 3h") +   geom_line() + xlab("Jour du mois de novembre") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Evolution de la MAPE globale journalière en Novembre"  )
+
+#####################
+#per week (each day)#
+#####################
+
+MAPE_per_week <- array(0, dim=c(4, 6, 7), dimnames=list( c("CACO-SVR", "Naive", "kNN_DEV", "kNN_DIRECT"),
+                                                            H,
+                                                            c("Monday", "Tuesday", "Wednesday", "Thursday",
+                                                              "Friday", "Saturday", "Sunday" ))
+                      )
+
+MAPE_per_week[1, , 5] <- rowMeans(online_Bellevue_hist_30$MAPE_global[,1:47], na.rm = T)
+MAPE_per_week[2, , 5] <- rowMeans(result_Bellevue_NAIVE_Bellevue$MAPE_global[,1:47], na.rm = T) #naive
+MAPE_per_week[4, , 5] <- rowMeans(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[,1:47], na.rm = T) #knn_direct
+MAPE_per_week[3, , 5] <- rowMeans(result_Bellevue_kNN_DEV_Bellevue$MAPE_global[,1:47], na.rm = T) #knn_dev
+day <- 5
+for(i in 1:29){
+  if ( (day+i)%%7 == 0 ){
+    num_day <- 7
+  }else{
+    num_day <- (day+i)%%7
+  }
+  MAPE_per_week[1, , num_day] <- MAPE_per_week[1, , num_day] + 
+                             rowMeans(online_Bellevue_hist_30$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #svr
+  MAPE_per_week[2, , num_day] <- MAPE_per_week[2, , num_day] + rowMeans(result_Bellevue_NAIVE_Bellevue$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #naive
+  MAPE_per_week[4, , num_day] <- MAPE_per_week[4, , num_day] + rowMeans(result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #knn_direct
+  MAPE_per_week[3, , num_day] <- MAPE_per_week[3, , num_day] + rowMeans(result_Bellevue_kNN_DEV_Bellevue$MAPE_global[,(i*48):(i*48+47)], na.rm = T) #knn_dev
+}
+
+MAPE_per_week[,, c(1:5,7)] <- MAPE_per_week[,, c(1:5,7)]/5
+MAPE_per_week[,, 6] <- MAPE_per_week[,, 6]/6
+
+MAPE_per_week_df <- adply(MAPE_per_week, c(1,2,3) )
+str(MAPE_per_week_df)
+
+#0h30
+rows <- which(MAPE_per_week_df$X2 ==  "0h30")
+p1 <- ggplot(data=MAPE_per_week_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p1 <- p1 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 0h30") +   geom_line() + xlab("Jour de la semaine") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")
+p1
+
+#1h30
+rows <- which(MAPE_per_week_df$X2 ==  "1h30")
+p3 <- ggplot(data=MAPE_per_week_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p3 <- p3 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 1h30") +   geom_line() + xlab("Jour de la semaine") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p3
+
+#2h
+rows <- which(MAPE_per_week_df$X2 ==  "2h00")
+p4 <- ggplot(data=MAPE_per_week_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p4 <- p4 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 2h") +   geom_line() + xlab("Jour de la semaine") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p4
+
+#3h
+rows <- which(MAPE_per_week_df$X2 ==  "3h00")
+p6 <- ggplot(data=MAPE_per_week_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p6 <- p6 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 3h") +   geom_line() + xlab("Jour de la semaine") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Evolution de la MAPE globale hebdomadaire en Novembre"  )
+
+##########
+#per hour#
+##########
+
+MAPE_per_hours <- array(0, dim=c(4, 6, 24), dimnames=list( c("CACO-SVR", "Naive", "kNN_DEV", "kNN_DIRECT"),
+                                                            H,
+                                                            0:23)
+                      )
+#convert NA to 0
+MAPE_global_svr <- online_Bellevue_hist_30$MAPE_global #svr
+MAPE_global_svr[is.na(online_Bellevue_hist_30$MAPE_global)] <- 0
+NAIVE_GlobalMAPE.0 <- result_Bellevue_NAIVE_Bellevue$MAPE_global #naive
+NAIVE_GlobalMAPE.0[is.na(NAIVE_GlobalMAPE.0)] <- 0
+kNN_DIRECT_GlobalMAPE.0 <- result_Bellevue_kNN_DIRECT_Bellevue$MAPE_global # knn_direct
+kNN_DIRECT_GlobalMAPE.0[is.na(kNN_DIRECT_GlobalMAPE.0)] <- 0
+kNN_DEV_GlobalMAPE.0 <- result_Bellevue_kNN_DEV_Bellevue$MAPE_global #knn_dev
+kNN_DEV_GlobalMAPE.0[is.na(kNN_DEV_GlobalMAPE.0)] <- 0
+
+#num heure associé à chaque pas de temps
+hours <- 0
+for(i in 0:23){
+  hours <- c(hours, rep(i,2))
+}
+hours <- hours[-1]
+hours <- rep(hours, 31)
+hours <- hours[-1]
+hours <- hours[1:1439]
+
+for(i in 1:1439){
+  MAPE_per_hours[1, , hours[i]+1] <- MAPE_per_hours[1, , hours[i]+1] + MAPE_global_svr[,i] #svr
+  MAPE_per_hours[2, , hours[i]+1] <- MAPE_per_hours[2, , hours[i]+1] + NAIVE_GlobalMAPE.0[,i] #naive
+  MAPE_per_hours[4, , hours[i]+1] <- MAPE_per_hours[4, , hours[i]+1] + kNN_DIRECT_GlobalMAPE.0[,i] #knn_direct
+  MAPE_per_hours[3, , hours[i]+1] <- MAPE_per_hours[3, , hours[i]+1] + kNN_DEV_GlobalMAPE.0[,i] #knn_dev
+}
+
+#h = 30 min
+MAPE_per_hours[,1 , 1] <- MAPE_per_hours[,1 , 1]/length(which(hours==0)) #[0:0.30]
+MAPE_per_hours[,1 , -1] <- MAPE_per_hours[,1 , -1]/length(which(hours==1)) #reste
+
+#h = 1.00
+MAPE_per_hours[,2 , 1] <- MAPE_per_hours[,2 , 1]/length(which(hours[-1]==0)) #[0:0.30]
+MAPE_per_hours[,2 , -1] <- MAPE_per_hours[,2 , -1]/length(which(hours[-1]==1)) #reste
+
+#h = 1.30
+MAPE_per_hours[,3 , 1] <- MAPE_per_hours[,3 , 1]/length(which(hours[-(1:2)]==0)) #[0:0.30]
+MAPE_per_hours[,3 , 2] <- MAPE_per_hours[,3 , 2]/length(which(hours[-(1:2)]==1))
+MAPE_per_hours[,3 , -(1:2)] <- MAPE_per_hours[,3 , -(1:2)]/length(which(hours[-(1:2)]==3)) #reste
+
+#h = 2.00
+MAPE_per_hours[,4 , 1] <- MAPE_per_hours[,4 , 1]/length(which(hours[-(1:3)]==0)) #[0:0.30]
+MAPE_per_hours[,4 , 2] <- MAPE_per_hours[,4 , 2]/length(which(hours[-(1:3)]==1))
+MAPE_per_hours[,4 , 3] <- MAPE_per_hours[,4 , 3]/length(which(hours[-(1:3)]==2))
+MAPE_per_hours[,4 , -(1:3)] <- MAPE_per_hours[,4 , -(1:3)]/length(which(hours[-(1:3)]==3)) #reste
+
+#h = 2.30
+MAPE_per_hours[,5 , 1] <- MAPE_per_hours[,5 , 1]/length(which(hours[-(1:4)]==0)) #[0:0.30]
+MAPE_per_hours[,5 , 2] <- MAPE_per_hours[,5 , 2]/length(which(hours[-(1:4)]==1))
+MAPE_per_hours[,5 , 3] <- MAPE_per_hours[,5 , 3]/length(which(hours[-(1:4)]==2))
+MAPE_per_hours[,5 , 4] <- MAPE_per_hours[,5 , 4]/length(which(hours[-(1:4)]==3))
+MAPE_per_hours[,5 , -(1:4)] <- MAPE_per_hours[,5 , -(1:4)]/length(which(hours[-(1:4)]==4)) #reste
+
+#h = 3.00
+MAPE_per_hours[,6 , 1] <- MAPE_per_hours[,6 , 1]/length(which(hours[-(1:5)]==0)) #[0:0.30]
+MAPE_per_hours[,6 , 2] <- MAPE_per_hours[,6 , 2]/length(which(hours[-(1:5)]==1))
+MAPE_per_hours[,6 , 3] <- MAPE_per_hours[,6 , 3]/length(which(hours[-(1:5)]==2))
+MAPE_per_hours[,6 , 4] <- MAPE_per_hours[,6 , 4]/length(which(hours[-(1:5)]==3))
+MAPE_per_hours[,6 , 5] <- MAPE_per_hours[,6 , 5]/length(which(hours[-(1:5)]==4))
+MAPE_per_hours[,6 , -(1:5)] <- MAPE_per_hours[,6 , -(1:5)]/length(which(hours[-(1:5)]==5)) #reste
+
+
+
+#vizu
+MAPE_per_hours_df <- adply(MAPE_per_hours, c(1,2,3) )
+str(MAPE_per_hours_df)
+
+#0h30
+rows <- which(MAPE_per_hours_df$X2 ==  "0h30")
+p1 <- ggplot(data=MAPE_per_hours_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p1 <- p1 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 0h30") +   geom_line() + xlab("Heures") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")
+p1
+
+#1h30
+rows <- which(MAPE_per_hours_df$X2 ==  "1h30")
+p3 <- ggplot(data=MAPE_per_hours_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p3 <- p3 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 1h30") +   geom_line() + xlab("Heures") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p3s
+
+#2h
+rows <- which(MAPE_per_hours_df$X2 ==  "2h00")
+p4 <- ggplot(data=MAPE_per_hours_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p4 <- p4 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 2h") +   geom_line() + xlab("Heures") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p4
+
+#3h
+rows <- which(MAPE_per_hours_df$X2 ==  "3h00")
+p6 <- ggplot(data=MAPE_per_hours_df[rows,], aes(x=X3, y=V1, group=X1, shape= X1, colour=X1) )
+p6 <- p6 + geom_point(size=4) + geom_line(size=1) + ggtitle("A horzion de prévision 3h") +   geom_line() + xlab("Heures") + ylab("MAPE (en %)") +  
+    scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Evolution de la MAPE globale par heure en Novembre"  )
+
+whichDate(3936)
+
+##################
+#per hour + and -#
+##################
+
+MAPE_per_hours_sign <- array(0, dim=c(2, 4, 6, 24), dimnames=list( c("negatif","positif"),
+                                                             c("CACO-SVR", "Naive", "kNN_DEV", "kNN_DIRECT"),
+                                                             H,
+                                                             0:23)
+                      )
+nb_percentage_error_per_hours_sign <- array(0, dim=c(2, 4, 6, 24), dimnames=list( c("negatif","positif"),
+                                                             c("CACO-SVR", "Naive", "kNN_DEV", "kNN_DIRECT"),
+                                                             H,
+                                                             0:23)
+                      )
+
+#num heure associé à chaque pas de temps
+hours <- 0
+for(i in 0:23){
+  hours <- c(hours, rep(i,2))
+}
+hours <- hours[-1]
+hours <- rep(hours, 31)
+hours <- hours[-1]
+hours <- hours[1:1439]
+
+#convert NA to 0
+online_Bellevue_hist_30_relative_ERROR <- online_Bellevue_hist_30$relative_ERROR #svr
+online_Bellevue_hist_30_relative_ERROR[is.na(online_Bellevue_hist_30$relative_ERROR)] <- 0
+result_Bellevue_NAIVE_Bellevue_relative_ERROR <- result_Bellevue_NAIVE_Bellevue$relative_ERROR #naive
+result_Bellevue_NAIVE_Bellevue_relative_ERROR[is.na(result_Bellevue_NAIVE_Bellevue_relative_ERROR)] <- 0
+result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR<- result_Bellevue_kNN_DIRECT_Bellevue$relative_ERROR # knn_direct
+result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[is.na(result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR)] <- 0
+result_Bellevue_kNN_DEV_Bellevue_relative_ERROR <- result_Bellevue_kNN_DEV_Bellevue$relative_ERROR #knn_dev
+result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[is.na(result_Bellevue_kNN_DEV_Bellevue_relative_ERROR)] <- 0
+
+for(i in 1:1439){
+  for(h in 1:6){
+    ### erreurs négatives
+    #svr
+    if( !is.na(mean( online_Bellevue_hist_30_relative_ERROR[ which(online_Bellevue_hist_30_relative_ERROR[,h,i] < 0), h,i], na.rm = T)) ){
+    MAPE_per_hours_sign[1, 1, h, hours[i]+1] <- MAPE_per_hours_sign[1, 1, h, hours[i]+1] + mean( online_Bellevue_hist_30_relative_ERROR[ which(online_Bellevue_hist_30_relative_ERROR[,h,i] < 0), h,i], na.rm = T)
+    nb_percentage_error_per_hours_sign[1, 1, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[1, 1, h, hours[i]+1] + length(which(online_Bellevue_hist_30_relative_ERROR[,h,i] < 0))
+    }
+    #naive
+    if( !is.na( mean(  result_Bellevue_NAIVE_Bellevue_relative_ERROR[ which(result_Bellevue_NAIVE_Bellevue_relative_ERROR[,h,i] < 0), h,i], na.rm = T))){
+      MAPE_per_hours_sign[1, 2, h, hours[i]+1] <- MAPE_per_hours_sign[1, 2, h, hours[i]+1] + mean(  result_Bellevue_NAIVE_Bellevue_relative_ERROR[ which(result_Bellevue_NAIVE_Bellevue_relative_ERROR[,h,i] < 0), h,i], na.rm = T)
+      nb_percentage_error_per_hours_sign[1, 2, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[1, 2, h, hours[i]+1] + length(which(result_Bellevue_NAIVE_Bellevue_relative_ERROR[,h,i] < 0))
+    }
+    #knn_direct
+    if( !is.na(mean(  result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[,h,i] < 0), h,i], na.rm = T) ) ){
+    MAPE_per_hours_sign[1, 4, h, hours[i]+1] <- MAPE_per_hours_sign[1, 4, h, hours[i]+1] + mean(  result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[,h,i] < 0), h,i], na.rm = T)
+    nb_percentage_error_per_hours_sign[1, 4, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[1, 4, h, hours[i]+1] + length(which(result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[,h,i] < 0))
+    }
+    #knn_dev
+    if( !is.na(mean(  result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[,h,i] < 0), h,i], na.rm = T) )){
+    MAPE_per_hours_sign[1, 3, h, hours[i]+1] <- MAPE_per_hours_sign[1, 3, h, hours[i]+1] + mean(  result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[,h,i] < 0), h,i], na.rm = T)
+    nb_percentage_error_per_hours_sign[1, 3, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[1, 3, h, hours[i]+1] + length(which(result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[,h,i] < 0))
+    }
+    
+    
+    ### erreurs positives
+    #svr
+    if( !is.na( mean( online_Bellevue_hist_30_relative_ERROR[ which(online_Bellevue_hist_30_relative_ERROR[,h,i] > 0), h,i], na.rm = T))){
+    MAPE_per_hours_sign[2, 1, h, hours[i]+1] <- MAPE_per_hours_sign[2, 1, h, hours[i]+1] + mean( online_Bellevue_hist_30_relative_ERROR[ which(online_Bellevue_hist_30_relative_ERROR[,h,i] > 0), h,i], na.rm = T)
+    nb_percentage_error_per_hours_sign[2, 1, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[2, 1, h, hours[i]+1] + length(which(online_Bellevue_hist_30_relative_ERROR[,h,i] > 0))
+    }
+    #naive
+    if( !is.na(mean(  result_Bellevue_NAIVE_Bellevue_relative_ERROR[ which(result_Bellevue_NAIVE_Bellevue_relative_ERROR[,h,i] > 0), h,i], na.rm = T) )){
+    MAPE_per_hours_sign[2, 2, h, hours[i]+1] <- MAPE_per_hours_sign[2, 2, h, hours[i]+1] + mean(  result_Bellevue_NAIVE_Bellevue_relative_ERROR[ which(result_Bellevue_NAIVE_Bellevue_relative_ERROR[,h,i] > 0), h,i], na.rm = T)
+    nb_percentage_error_per_hours_sign[2, 2, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[2, 2, h, hours[i]+1] + length(which(result_Bellevue_NAIVE_Bellevue_relative_ERROR[,h,i] > 0))
+    }
+    #knn_direct
+    if( !is.na(mean(  result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[,h,i] > 0), h,i], na.rm = T) )){
+    MAPE_per_hours_sign[2, 4, h, hours[i]+1] <- MAPE_per_hours_sign[2, 4, h, hours[i]+1] + mean(  result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[,h,i] > 0), h,i], na.rm = T)
+    nb_percentage_error_per_hours_sign[2, 4, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[2, 4, h, hours[i]+1] + length(which(result_Bellevue_kNN_DIRECT_Bellevue_relative_ERROR[,h,i] > 0))
+    }
+    #knn_dev
+    if( !is.na(  mean(  result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[,h,i] > 0), h,i], na.rm = T))){
+    MAPE_per_hours_sign[2, 3, h, hours[i]+1] <- MAPE_per_hours_sign[2, 3, h, hours[i]+1]+ mean(  result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[ which(result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[,h,i] > 0), h,i], na.rm = T)
+    nb_percentage_error_per_hours_sign[2, 3, h, hours[i]+1] <- nb_percentage_error_per_hours_sign[2, 3, h, hours[i]+1] + length(which(result_Bellevue_kNN_DEV_Bellevue_relative_ERROR[,h,i] > 0))
+    }
+    
+  }
+}
+
+percenttage_negatif_error <- array(0, dim=c(4, 6, 24), dimnames=list(c("CACO-SVR", "Naive",
+                                                                       "kNN_DEV", "kNN_DIRECT"),
+                                                                     H,
+                                                                     0:23) )
+percenttage_negatif_error <- nb_percentage_error_per_hours_sign[1,,,]/(nb_percentage_error_per_hours_sign[1,,,]
+                                                                       +nb_percentage_error_per_hours_sign[2,,,])
+
+#vizu percentage negatif error
+percenttage_negatif_error_df <- adply(percenttage_negatif_error, c(1,2,3) )
+str(percenttage_negatif_error_df)
+
+
+#0h30
+rows <- which(percenttage_negatif_error_df$X2 ==  "0h30")
+p1 <- ggplot(data=percenttage_negatif_error_df[rows,], aes(x=X3, y=V1, group=interaction(X1,X2), shape= X1, colour=X1) )
+p1 <- p1 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 0h30") + xlab("Heure") + ylab("Pourcentage d'erreurs négatives (nb de sur-estimations)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")  + geom_hline(yintercept=0.5, linetype="dashed", color = "black")
+p1
+
+
+#1h30
+rows <- which(percenttage_negatif_error_df$X2 ==  "1h30")
+p3 <- ggplot(data=percenttage_negatif_error_df[rows,], aes(x=X3, y=V1, group=interaction(X1,X2), shape= X1, colour=X1) )
+p3 <- p3 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 1h30") + xlab("Heure") + ylab("Pourcentage d'erreurs négatives (nb de sur-estimations)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")  + geom_hline(yintercept=0.5, linetype="dashed", color = "black")
+p3
+
+#2h
+rows <- which(percenttage_negatif_error_df$X2 ==  "2h00")
+p4 <- ggplot(data=percenttage_negatif_error_df[rows,], aes(x=X3, y=V1, group=interaction(X1,X2), shape= X1, colour=X1) )
+p4 <- p4 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 2h00") + xlab("Heure") + ylab("Pourcentage d'erreurs négatives (nb de sur-estimations)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")  + geom_hline(yintercept=0.5, linetype="dashed", color = "black")
+p1
+
+#3h
+rows <- which(percenttage_negatif_error_df$X2 ==  "3h00")
+p6 <- ggplot(data=percenttage_negatif_error_df[rows,], aes(x=X3, y=V1, group=interaction(X1,X2), shape= X1, colour=X1) )
+p6 <- p6 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 3h00") + xlab("Heure") + ylab("Pourcentage d'erreurs négatives (nb de sur-estimations)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")  + geom_hline(yintercept=0.5, linetype="dashed", color = "black")
+p6
+
+grid.arrange(p1, p3, p4, p6, ncol = 2, nrow = 2, top="Centre ville: Evolution du pourcentage d'erreurs négatives (sur-estimations) par heure en Novembre"  )
+grid.arrange(p1, p6, ncol = 2, nrow = 1, top="Centre ville: Evolution du pourcentage d'erreurs négatives (sur-estimations) par heure en Novembre"  )
+
+
+#h = 30 min
+MAPE_per_hours_sign[,,1 , 1] <- MAPE_per_hours_sign[,,1 , 1]/length(which(hours==0)) #[0:0.30]
+MAPE_per_hours_sign[,,1 , -1] <- MAPE_per_hours_sign[,,1 , -1]/length(which(hours==1)) #reste
+
+#h = 1.00
+MAPE_per_hours_sign[,,2 , 1] <- MAPE_per_hours_sign[,,2 , 1]/length(which(hours[-1]==0)) #[0:0.30]
+MAPE_per_hours_sign[,,2 , -1] <- MAPE_per_hours_sign[,,2 , -1]/length(which(hours[-1]==1)) #reste
+
+#h = 1.30
+MAPE_per_hours_sign[,,3 , 1] <- MAPE_per_hours_sign[,,3 , 1]/length(which(hours[-(1:2)]==0)) #[0:0.30]
+MAPE_per_hours_sign[,,3 , 2] <- MAPE_per_hours_sign[,,3 , 2]/length(which(hours[-(1:2)]==1))
+MAPE_per_hours_sign[,,3 , -(1:2)] <- MAPE_per_hours_sign[,,3 , -(1:2)]/length(which(hours[-(1:2)]==3)) #reste
+
+#h = 2.00
+MAPE_per_hours_sign[,,4 , 1] <- MAPE_per_hours_sign[,,4 , 1]/length(which(hours[-(1:3)]==0)) #[0:0.30]
+MAPE_per_hours_sign[,,4 , 2] <- MAPE_per_hours_sign[,,4 , 2]/length(which(hours[-(1:3)]==1))
+MAPE_per_hours_sign[,,4 , 3] <- MAPE_per_hours_sign[,,4 , 3]/length(which(hours[-(1:3)]==2))
+MAPE_per_hours_sign[,,4 , -(1:3)] <- MAPE_per_hours_sign[,,4 , -(1:3)]/length(which(hours[-(1:3)]==3)) #reste
+
+#h = 2.30
+MAPE_per_hours_sign[,,5 , 1] <- MAPE_per_hours_sign[,,5 , 1]/length(which(hours[-(1:4)]==0)) #[0:0.30]
+MAPE_per_hours_sign[,,5 , 2] <- MAPE_per_hours_sign[,,5 , 2]/length(which(hours[-(1:4)]==1))
+MAPE_per_hours_sign[,,5 , 3] <- MAPE_per_hours_sign[,,5 , 3]/length(which(hours[-(1:4)]==2))
+MAPE_per_hours_sign[,,5 , 4] <- MAPE_per_hours_sign[,,5 , 4]/length(which(hours[-(1:4)]==3))
+MAPE_per_hours_sign[,,5 , -(1:4)] <- MAPE_per_hours_sign[,,5 , -(1:4)]/length(which(hours[-(1:4)]==4)) #reste
+
+#h = 3.00
+MAPE_per_hours_sign[,,6 , 1] <- MAPE_per_hours_sign[,,6 , 1]/length(which(hours[-(1:5)]==0)) #[0:0.30]
+MAPE_per_hours_sign[,,6 , 2] <- MAPE_per_hours_sign[,,6 , 2]/length(which(hours[-(1:5)]==1))
+MAPE_per_hours_sign[,,6 , 3] <- MAPE_per_hours_sign[,,6 , 3]/length(which(hours[-(1:5)]==2))
+MAPE_per_hours_sign[,,6 , 4] <- MAPE_per_hours_sign[,,6 , 4]/length(which(hours[-(1:5)]==3))
+MAPE_per_hours_sign[,,6 , 5] <- MAPE_per_hours_sign[,,6 , 5]/length(which(hours[-(1:5)]==4))
+MAPE_per_hours_sign[,,6 , -(1:5)] <- MAPE_per_hours_sign[,,6 , -(1:5)]/length(which(hours[-(1:5)]==5)) #reste
+
+MAPE_per_hours_sign[1,,,] <- MAPE_per_hours_sign[1,,,]*percenttage_negatif_error
+MAPE_per_hours_sign[2,,,] <- MAPE_per_hours_sign[2,,,]*(1-percenttage_negatif_error)
+
+
+#vizu
+MAPE_per_hours_sign_df <- adply(MAPE_per_hours_sign, c(1,2,3,4) )
+str(MAPE_per_hours_sign_df)
+
+
+#0h30
+rows <- which(MAPE_per_hours_sign_df$X3 ==  "0h30")
+p1 <- ggplot(data=MAPE_per_hours_sign_df[rows,], aes(x=X4, y=V1, group=interaction(X1,X2), shape= X2, colour=X2) )
+p1 <- p1 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 0h30") + xlab("Heure") + ylab("MAPE réseau pondérée par le pourcentage d'erreurs (négatives ou positives) (en %)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")  + geom_hline(yintercept=0, color = "black")
+p1
+
+#1h30
+rows <- which(MAPE_per_hours_sign_df$X3 ==  "1h30")
+p3 <- ggplot(data=MAPE_per_hours_sign_df[rows,], aes(x=X4, y=V1, group=interaction(X1,X2), shape= X2, colour=X2) )
+p3 <- p3 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 1h30") +   geom_line() + xlab("Heures") + ylab("MAPE réseau pondérée par le pourcentage d'erreurs (négatives ou positives) (en %)") + scale_colour_discrete(guide=FALSE) + scale_shape_discrete(guide=FALSE)+ geom_hline(yintercept=0, color = "black")
+p3
+
+#2h
+rows <- which(MAPE_per_hours_sign_df$X3 ==  "2h00")
+p4 <- ggplot(data=MAPE_per_hours_sign_df[rows,], aes(x=X4, y=V1, group=interaction(X1,X2), shape= X2, colour=X2) )
+p4 <- p4 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 2h") + xlab("Heure") + ylab("MAPE réseau pondérée par le pourcentage d'erreurs (négatives ou positives)(en %)") +  
+    scale_colour_discrete(name="Méthodes") + scale_shape_discrete(guide=FALSE)+ theme(legend.position="top", legend.box = "horizontal")  + geom_hline(yintercept=0, color = "black")
+p4
+
+#3h
+rows <- which(MAPE_per_hours_sign_df$X3 ==  "3h00")
+p6 <- ggplot(data=MAPE_per_hours_sign_df[rows,], aes(x=X4, y=V1, group=interaction(X1,X2), shape= X2, colour=X2) )
+p6 <- p6 + geom_point(size=3) + geom_line(size=1) + ggtitle("A horzion de prévision 3h") +   geom_line() + xlab("Heure") + ylab("MAPE réseau pondérée par le pourcentage d'erreurs (négatives ou positives) (en %)")+ scale_shape_discrete(guide=FALSE)+ geom_hline(yintercept=0, color = "black")+ theme(legend.position="top", legend.box = "horizontal")+scale_colour_discrete(name="Méthodes")
+p6
+
+grid.arrange(p1, p3, ncol = 2, nrow = 1, top="Centre ville: Evolution de la MAPE réseau des erreurs positives et négatives par heure en Novembre"  )
+grid.arrange(p4, p6, ncol = 2, nrow = 1, top="Centre ville: Evolution de la MAPE réseau des erreurs positives et négatives par heure en Novembre"  )
+```
+
+

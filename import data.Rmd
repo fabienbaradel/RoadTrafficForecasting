@@ -1,0 +1,566 @@
+---
+title: "Stage"
+author: "Fabien Baradel"
+date: "17 juin 2015"
+output: pdf_document
+---
+
+
+# IMPORTATION DES DONNEES
+```{r}
+  Bellevue_Matrix <- read.csv("C:/Users/billotro/Desktop/Fabien/data/Bellevue_Matrix.csv", header=FALSE)
+  Cesbron_Matrix <- read.csv("C:/Users/billotro/Desktop/Fabien/data/Cesbron_Matrix.csv", header=FALSE)
+  Chevire_Matrix <- read.csv("C:/Users/billotro/Desktop/Fabien/data/Chevire_Matrix.csv", header=FALSE)
+  Date_Matrix <- read.csv("C:/Users/billotro/Desktop/Fabien/data/Date.csv", header=FALSE)
+  #Friday_Bool <- read.table("Z:/Data Nantes/DATA-trainee/Friday_Bool.csv", quote="\"", comment.char="")
+  #Monday_Bool <- read.table("Z:/Data Nantes/DATA-trainee/Monday_Bool.csv", quote="\"", comment.char="")
+  #Profile24H_mn <- read.table("Z:/Data Nantes/DATA-trainee/Profile24H_mn.csv", quote="\"", comment.char="")
+  #Thursday_Bool <- read.table("Z:/Data Nantes/DATA-trainee/Thursday_Bool.csv", quote="\"", comment.char="")
+  #TimeSpentSinceOrigin_s <- read.table("Z:/Data Nantes/DATA-trainee/TimeSpentSinceOrigin_s.csv", quote="\"", comment.char="")
+  #Tuesday_Bool <- read.table("Z:/Data Nantes/DATA-trainee/Tuesday_Bool.csv", quote="\"", comment.char="")
+  Urban_Matrix <- read.csv("C:/Users/billotro/Desktop/Fabien/data/Urban_Matrix.csv", header=FALSE)
+  #Wednesday_Bool <- read.table("Z:/Data Nantes/DATA-trainee/Wednesday_Bool.csv", quote="\"", comment.char="")
+  
+  # transposer 4 matrices
+  Bellevue_Matrix <- as.data.frame(t(Bellevue_Matrix[,]))
+  Cesbron_Matrix <- as.data.frame(t(Cesbron_Matrix[,]))
+  Chevire_Matrix <- as.data.frame(t(Chevire_Matrix[,]))
+  Urban_Matrix <- as.data.frame(t(Urban_Matrix[,]))
+  
+  colnames(Bellevue_Matrix)<-paste("X", 1:ncol(Bellevue_Matrix), sep = "")
+  colnames(Cesbron_Matrix)<-paste("X", 1:ncol(Cesbron_Matrix), sep = "")
+  colnames(Chevire_Matrix)<-paste("X", 1:ncol(Chevire_Matrix), sep = "")
+  colnames(Urban_Matrix)<-paste("X", 1:ncol(Urban_Matrix), sep = "")
+  
+  rownames(Bellevue_Matrix)<- 1:nrow(Bellevue_Matrix)
+  rownames(Cesbron_Matrix)<-1:nrow(Cesbron_Matrix)
+  rownames(Chevire_Matrix)<-1:nrow(Chevire_Matrix)
+  rownames(Urban_Matrix)<-1:nrow(Urban_Matrix)
+
+  str(Bellevue_Matrix)
+  
+  
+  
+  # convert Date matrix info in format date
+  for(i in 1:nrow(Date_Matrix)){
+    if(as.numeric(Date_Matrix[i,4])<10){
+      Date_Matrix[i,4]<-paste("0", Date_Matrix[i,4], sep="")
+    }
+    if(as.numeric(Date_Matrix[i,5])==0){
+      Date_Matrix[i,5]<-"00"
+    }
+  }
+
+  Date <- ISOdate(Date_Matrix[1:nrow(Date_Matrix),1],Date_Matrix[1:nrow(Date_Matrix),2],Date_Matrix[1:nrow(Date_Matrix),3],Date_Matrix[1:nrow(Date_Matrix),4],Date_Matrix[1:nrow(Date_Matrix),5],Date_Matrix[1:nrow(Date_Matrix),6])
+  
+  #format de lecture standard
+  format(Date[1],'%A, %B %d, %Y %H:%M:%S')
+
+  
+  save.image(".Rhistory.RData") #save as R workspace
+  
+  
+  #fonction qui renvoie la date d'une observation "obs"
+  whichDate <- function(obs){ 
+    return( format(Date[obs], '%A, %B %d, %Y %H:%M:%S'))
+    }
+```
+
+
+```{r}
+  #EXPLORATION DES DONNES DE BELLEVUE
+
+  #plots jour par jour d'une semaine (la 1?re) de la section 1
+  par(mfrow=c(4,2))
+  section<-1 #nous prenons l'exemple de la setion 5
+  j=5 # (j-?me+1) semaine
+  i=0 # jour de la semaine (0 = dimanche)
+  plot(Date[336*j+i*48+1:48], Bellevue_Matrix[336*j+i*48+1:48,section], type = 'l', xlab = format(Date[336*j+i*48+1],'%A' ), ylab = "Vitesse en km/h")
+  for(i in 1:6){
+    plot(Date[336*j+i*48+1:48], Bellevue_Matrix[336*j+i*48+1:48,section], type = 'l', xlab = format(Date[336*j+i*48+1],'%A' ), ylab = "Vitesse en km/h")
+    }
+#cr?ation de mod?les diff?rents pour le week end?!
+  
+  # => visualisation de la semaine moyenne
+  
+  format(Date[336*0+1],'%A, %B %d, %Y %H:%M:%S') 
+  format(Date[336*1+1],'%A, %B %d, %Y %H:%M:%S') 
+  format(Date[336*12+1],'%A, %B %d, %Y %H:%M:%S') # Il ya 12 dimanches dans la BDD
+
+  meanWeek.mean.Sunday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.sd.Sunday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.mean.Monday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.sd.Monday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.mean.Tuesday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.sd.Tuesday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.mean.Wednesday <- matrix(nrow= 48, ncol =1)
+  meanWeek.sd.Wednesday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.mean.Thursday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.sd.Thursday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.mean.Friday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.sd.Friday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.mean.Saturday <- matrix(nrow= 48, ncol = 1)
+  meanWeek.sd.Saturday <- matrix(nrow= 48, ncol = 1)
+  
+  for(i in 1:1){ #on ne s'interesse qu'? la premi?re section pour le moment
+    print(i)
+    for(j in 1:48){
+      print(j)
+      demiHeure <- j
+      section <- i
+      meanWeek.mean.Sunday[demiHeure,section] <- mean(Bellevue_Matrix[336*(1:12)+demiHeure,section])
+      meanWeek.sd.Sunday[demiHeure,section] <- sd(Bellevue_Matrix[336*(1:12)+demiHeure,section])
+      meanWeek.mean.Monday[demiHeure,section] <- mean(Bellevue_Matrix[336*(1:12)+demiHeure+48,section])
+      meanWeek.sd.Monday[demiHeure,section] <- sd(Bellevue_Matrix[336*(1:12)+demiHeure+48,section])
+      meanWeek.mean.Tuesday[demiHeure,section] <- mean(Bellevue_Matrix[336*(1:12)+demiHeure+2*48,section])
+      meanWeek.sd.Tuesday[demiHeure,section] <- sd(Bellevue_Matrix[336*(1:12)+demiHeure+2*48,section])
+      meanWeek.mean.Wednesday[demiHeure,section] <- mean(Bellevue_Matrix[336*(1:12)+demiHeure+3*48,section])
+      meanWeek.sd.Wednesday[demiHeure,section] <- sd(Bellevue_Matrix[336*(1:12)+demiHeure+3*48,section])
+      meanWeek.mean.Thursday[demiHeure,section] <- mean(Bellevue_Matrix[336*(1:12)+demiHeure+4*48,section])
+      meanWeek.sd.Thursday[demiHeure,section] <- sd(Bellevue_Matrix[336*(1:12)+demiHeure+4*48,section])
+      meanWeek.mean.Friday[demiHeure,section] <- mean(Bellevue_Matrix[336*(1:12)+demiHeure+5*48,section])
+      meanWeek.sd.Friday[demiHeure,section] <- sd(Bellevue_Matrix[336*(1:12)+demiHeure+5*48,section])
+      meanWeek.mean.Saturday[demiHeure,section] <- mean(Bellevue_Matrix[336*(1:12)+demiHeure+6*48,section])
+      meanWeek.sd.Saturday[demiHeure,section] <- sd(Bellevue_Matrix[336*(1:12)+demiHeure+6*48,section])
+      }
+  }
+  
+  #moyenne du traffic sur la section 1 pendant les 3 mois
+  par(mfrow=c(4,2))
+  plot(Date[0*48+1:48], meanWeek.mean.Sunday[,1], type = 'l', xlab = format(Date[0*48+1],'%A' ), ylab = "Vitesse en km/h")
+  plot(Date[1*48+1:48], meanWeek.mean.Monday[,1], type = 'l', xlab = format(Date[1*48+1],'%A' ), ylab = "Vitesse en km/h")
+  plot(Date[2*48+1:48], meanWeek.mean.Tuesday[,1], type = 'l', xlab = format(Date[2*48+1],'%A' ), ylab = "Vitesse en km/h")
+  plot(Date[3*48+1:48], meanWeek.mean.Wednesday[,1], type = 'l', xlab = format(Date[3*48+1],'%A' ), ylab = "Vitesse en km/h")
+  plot(Date[4*48+1:48], meanWeek.mean.Thursday[,1], type = 'l', xlab = format(Date[4*48+1],'%A' ), ylab = "Vitesse en km/h")
+  plot(Date[5*48+1:48], meanWeek.mean.Friday[,1], type = 'l', xlab = format(Date[5*48+1],'%A' ), ylab = "Vitesse en km/h")
+  plot(Date[6*48+1:48], meanWeek.mean.Saturday[,1], type = 'l', xlab = format(Date[6*48+1],'%A' ), ylab = "Vitesse en km/h")
+  title("Vitesse moyenne du traffic pendant les 3 mois", outer=TRUE)
+
+  
+  
+  #volatilit? du traffic sur la section 1 pendant les 3 mois
+  par(mfrow=c(4,2))
+  plot(Date[0*48+1:48], meanWeek.sd.Sunday[,1], type = 'l', xlab = format(Date[0*48+1],'%A' ), ylab = "Volatil?")
+  plot(Date[1*48+1:48], meanWeek.sd.Monday[,1], type = 'l', xlab = format(Date[1*48+1],'%A' ), ylab = "Volatil?")
+  plot(Date[2*48+1:48], meanWeek.sd.Tuesday[,1], type = 'l', xlab = format(Date[2*48+1],'%A' ), ylab = "Volatil?")
+  plot(Date[3*48+1:48], meanWeek.sd.Wednesday[,1], type = 'l', xlab = format(Date[3*48+1],'%A' ), ylab = "Volatil?")
+  plot(Date[4*48+1:48], meanWeek.sd.Thursday[,1], type = 'l', xlab = format(Date[4*48+1],'%A' ), ylab = "Volatil?")
+  plot(Date[5*48+1:48], meanWeek.sd.Friday[,1], type = 'l', xlab = format(Date[5*48+1],'%A' ), ylab = "Volatil?")
+  plot(Date[6*48+1:48], meanWeek.sd.Saturday[,1], type = 'l', xlab = format(Date[6*48+1],'%A' ), ylab = "Volatil?")
+  title("Volatilit? du traffic pendant les 3 mois", outer=TRUE)
+
+
+```
+
+
+
+ATTENTION:
+NE PAS PRENDRE EN COMPTE LA SUITE DU CODE!
+
+
+
+
+Prenons comme exemple introductif la section 1 (not? X1 dans la base de donn?es) de la zone Bellevue.
+Modelisons la vitesse en X1 ? la date t en fonction des autres sections X2:X144 ? la date t-1
+```{r}
+  #CREATION MODELE SVR SUR BELLEVUE (? 30 minutes) REGRESSION SUR LES AUTRES SECTIONS
+  n<-1000
+  nbSec<-ncol(Bellevue_Matrix)
+  
+  Y <- Bellevue_Matrix[2:n, 1]
+  X <- Bellevue_Matrix[1:(n-1), 2:nbSec]
+  trainingData <- data.frame(Y, X)
+  modelX1Bellevue<- svm(Y~., type = 'eps-regression', data=trainingData)
+  
+  summary(modelX1Bellevue)
+  
+  k <- 48 # k+1 = nombre de demi heures predictes (6 equivaut ? 3 heures)
+  predX1Bellevue <- predict(modelX1Bellevue, Bellevue_Matrix[(n+1):(n+k), 2:nbSec])
+
+  #VISUALISATION GRAPHIQUE
+  par(mfrow=c(1,1))
+  plot(Date[(n-5):(n+k)], Bellevue_Matrix[(n-5):(n+k), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h")
+  lines(Date[(n+1):(n+k)], predX1Bellevue, col="red")
+  
+  
+```
+
+
+```{r}
+   #fonction renvoyant un matrice avec les k voisins associ?s ? chaque observations
+  recoverNeighbors <- function(mat, k, s, N){
+    dist <- as.matrix(dist(Bellevue_Matrix[1:N,], method = "euclidean")) #construction de la matrice des distances
+    matNeighbors <- matrix( ncol = k, nrow = N,  dimnames = list(paste("t=", 1:N, sep=""),
+                                                                 paste("neighbor", 1:k, sep="")))
+  
+    for( i in 1:N ){
+      d <- dist[,i]
+      d <- sort(d)[2:(k+1)]
+      for(j in 1:k){
+        matNeighbors[i,j] <- as.numeric(names(d)[j])
+      }
+    }
+  return(matNeighbors)
+  }
+ 
+  #test
+  r <- recoverNeighbors(Bellevue_Matrix, 2, 2, n) #ok!
+  
+  
+  
+   
+  #Fonction qui renvoie la vitesse au temps t+1, ..., t+6 des k voisins de l'instant t
+  recoverNeighborsSpeed <- function(mat, matNeighbors, t){ #generaliser pour faire ttes les sections d'un coup
+    NeighborsSpeedDelta <- matrix(nrow = ncol(matNeighbors), ncol = nbPrevision)
+    colnames(NeighborsSpeedDelta) <- paste("Xt+", 1:nbPrevision, sep="")
+    rownames(NeighborsSpeedDelta) <- paste("voisin", 1:ncol(matNeighbors))
+    for(i in 1:nrow(NeighborsSpeedDelta)){
+      for(j in 1:nbPrevision){
+        NeighborsSpeedDelta[i,j] <- mat[matNeighbors[t,i]+j, 1]
+        }
+      }
+    
+    return(NeighborsSpeedDelta)
+  }
+  
+  
+   #fonction renvoyant un matrice avec les k voisins associ?s ? chaque observations
+  #sp?cificit? du cas ou on predit: t ne peux pas avoir un voisin dans le futur!
+  #on ne peut pas r?cup?rer un voisin apr?s t-6 (car on a pas les infos sur les horizons jusqu'? t+6)
+
+  recoverNeighborsForecasting <- function(mat, k, s, nbForecast){
+    dist <- as.matrix(dist(Bellevue_Matrix[1:(n+nbForecast-1),], method = "euclidean")) #construction de la matrice des distances
+    matNeighbors <- matrix( ncol = k, nrow = nbForecast,  dimnames = list(paste("x:t=", (n):(n+f-1), sep=""),
+                                                                 paste("neighbor", 1:k, sep="")))
+  
+    for( i in n:(n+nbForecast-1) ){
+      d <- dist[,i]
+      d <- sort(d)[-1]
+      j <- 1
+      while(j <= k){
+        if(as.numeric(names(d)[j]) < (i-5)){
+          matNeighbors[i-n+1,j] <- as.numeric(names(d)[j])
+          j <- j+1
+        }
+        
+        else{
+          d <- d[-j]
+        }
+        
+      }
+    }
+  return(matNeighbors)
+  }
+  
+  
+  #CREATION MODELE SVR sur bellevue (? 30 minutes): REGRESSION SUR LES VITESSES PRECEDENTES DE X1 (On fixe s et k =0)
+  n<-1000
+  s<-40 # s= memory
+  k<-10 # k = nombre de voisins selectionn?s
+  
+
+
+  
+  #######################################################
+  ########      CREATION TRAINING SET         ###########
+  #######################################################
+  
+  #r?cup?ration de la m?moire et ajout des vitesses associ?s aux voisins au temps t+delta
+  #creation de 6 training set (pour prevision de 30 min ? 3h)
+  
+  nbPrevision <- 6
+  
+  trainingSet <- matrix(nrow=n-s, ncol=nbPrevision+s+k*nbPrevision)
+  trainingset<-as.data.frame(trainingSet)
+  
+  namesNeighbors <- NA
+  for( i in 1:k){
+    voisin <- paste("voisin", i, sep="")
+    for( j in 1:6){
+      namesNeighbors <- c(namesNeighbors, paste(voisin, j, sep=":t+"))
+      }
+  }
+  namesNeighbors <- namesNeighbors[-1]
+  namesNeighbors
+  
+  colnames(trainingSet)<-c(paste("Xt+", 1:nbPrevision, sep=""), paste("Xt-", 0:(s-1), sep ="" ), namesNeighbors)
+  rownames(trainingSet) <- paste("t=", s:(n-1) , sep="")
+  #trainingSet #ok!
+  
+  
+  Neighbors_Matrix <- recoverNeighbors(Bellevue_Matrix, k, s, n-1) #recup voisins associ?s ? chaque obs
+  
+  #test
+  #recoverNeighborsSpeed(Bellevue_Matrix, Neighbors_Matrix, 1) # ok!
+  
+  for(i in 1:nrow(trainingSet)){
+    
+    #r?cup?ration des Xt+1,...,Xt+6
+    for(l in 1:nbPrevision){
+      if( (s+i+l-1) < n+1){
+        trainingSet[i,l] <- Bellevue_Matrix[s+i+l-1,1]
+      }
+      else{
+        trainingSet[i,l] <- NA
+      }
+    }
+    
+    #R?cup?ration de la m?moire: Xt,..., Xt-s
+    trainingSet[i,(nbPrevision+1):(nbPrevision+s)] <- Bellevue_Matrix[(i+s-1):i,1]
+    
+    #r?cup?ration de la vitesse des voisins au date t+1,..., t+6
+    for(nbVoisin in 1:k){
+      trainingSet[i, (nbPrevision+s+1):(nbPrevision+s+nbPrevision*nbVoisin)] <- recoverNeighborsSpeed(Bellevue_Matrix,
+                                                                                        Neighbors_Matrix,
+                                                                                        t = i+s-1) [nbVoisin,]
+    }
+      
+  }
+  
+  trainingSet #memory1 correspond ? Xt (dans ce cas on a toujours au minimum s=1)
+  
+  
+  
+  
+  #que faire quand les voisins correspondent ? la m?moire?!!!!????
+  
+  #On est oblig? de construire nbPrecsion (6) mod?les car on ne peut pas construire un mod?le SVM avec une var reponse en vecteur (?!)
+
+     
+  H <- c("0h30", "1h00", "1h30", "2h00", "2h30", "3h00")
+  
+  for(i in 1:nbPrevision){
+    assign(paste("model", H[i], sep = "_"), i)    
+  }
+
+  
+  
+  #######################################################
+  ########      CREATION DES 6 MOD?LES        ###########
+  #######################################################
+  
+  #on garde comme variables explicatives: la s observations de la memoire ( de Xt ? Xt-s+1) et tous les horizons des k voisins pour chaque t+delta (=> s+k*6 variables expl par regression)
+  #2eme methode: on garde uniquement l'horizon delta des voisins ? l'horizon de prevision delta (=> s+k variables expl par regression)
+  
+  #mod?le pour pr?diction ? 30 min
+  Y <- trainingSet[1:(n-s),1]
+  neighborsHorizon_0h30 <- s+(1:k)*nbPrevision+1 #horizons des voisins ? 30 min
+  #keptVar_0h30 <- (nbPrevision+1):(ncol(trainingset)) #1ere methode
+  keptVar_0h30 <- c( (nbPrevision+1):(nbPrevision+s), neighborsHorizon_0h30 ) #2eme methode
+  X <- trainingSet[1:(n-s), keptVar_0h30]
+  model_0h30 <-  svm(X, Y)
+
+  #mod?le pour pr?diction ? 1h
+  Y <- trainingSet[1:(n-s-1),2]
+  neighborsHorizon_1h <- s+(1:k)*nbPrevision+2 #horizons des voisins ? 1h
+  #keptVar_1h00 <- (nbPrevision+1):(ncol(trainingset)) #1ere methode
+  keptVar_1h <- c( (nbPrevision+1):(nbPrevision+s), neighborsHorizon_1h ) #2eme methode
+  X <- trainingSet[1:(n-s-1),keptVar_1h]
+  model_1h00 <-  svm(X, Y)
+  
+  #mod?le pour pr?diction ? 1h et 30 min
+  Y <- trainingSet[1:(n-s-2),3]
+  neighborsHorizon_1h30 <- s+(1:k)*nbPrevision+3 #horizons des voisins ? 1h30 min
+  #keptVar_1h30 <- (nbPrevision+1):(ncol(trainingset)) #1ere methode
+  keptVar_1h30 <- c( (nbPrevision+1):(nbPrevision+s), neighborsHorizon_1h30 ) #2eme methode
+  X <- trainingSet[1:(n-s-2),keptVar_1h30]
+  model_1h30 <-  svm(X, Y)
+  
+  #mod?le pour pr?diction ? 2h
+  Y <- trainingSet[1:(n-s-3),4]
+  neighborsHorizon_2h <- s+(1:k)*nbPrevision+4 #horizons des voisins ? 2h
+  #keptVar_2h00 <- (nbPrevision+1):(ncol(trainingset)) #1ere methode
+  keptVar_2h <- c( (nbPrevision+1):(nbPrevision+s), neighborsHorizon_2h ) #2eme methode
+  X <- trainingSet[1:(n-s-3),keptVar_2h]
+  model_2h00 <-  svm(X, Y)
+  
+  #mod?le pour pr?diction ? 2h et 30 min
+  Y <- trainingSet[1:(n-s-4),5]
+  neighborsHorizon_2h30 <- s+(1:k)*nbPrevision+5 #horizons des voisins ? 2h30
+  #keptVar_2h30 <- (nbPrevision+1):(ncol(trainingset)) #1ere methode
+  keptVar_2h30 <- c( (nbPrevision+1):(nbPrevision+s), neighborsHorizon_2h30 ) #2eme methode
+  X <- trainingSet[1:(n-s-4),keptVar_2h30]
+  model_2h30 <-  svm(X, Y)
+  
+  #mod?le pour pr?diction ? 3h
+  Y <- trainingSet[1:(n-s-5),6]
+  neighborsHorizon_3h <- s+(1:k)*nbPrevision+6 #horizons des voisins ? 3h
+  #keptVar_3h <- (nbPrevision+1):(ncol(trainingset)) #1ere methode
+  keptVar_3h <- c( (nbPrevision+1):(nbPrevision+s), neighborsHorizon_3h ) #2eme methode
+  X <- trainingSet[1:(n-s-5),keptVar_3h]
+  model_3h00 <-  svm(X, Y)
+  
+  
+  
+  #trouver une solution pour automatiser!
+#   listModels <- list()
+#   
+#   for(i in 1:nbPrevision){
+#     Y <- trainingSet[1:(n-s-i+1),i]
+#     X <- trainingSet[1:(n-s-i+1),(nbPrevision+1):(ncol(trainingSet))]
+#     model <-  svm( Y ~ X, type = 'eps-regression', data=trainingSet)
+#     listModels <- list(listModels, model)
+#   }
+#   
+  
+  #######################################################
+  ########      CREATION TEST SET             ###########
+  #######################################################
+  
+  f <- 48
+  
+  testSet <- matrix( nrow=f, ncol= s+k*nbPrevision)
+  colnames(testSet) <- c(paste("Xt-", (0:(s-1)), sep=""),  namesNeighbors)
+  rownames(testSet) <- paste("t=", (n):(n+f-1), sep="")
+  #testSet
+  
+ 
+  
+  Neighbors_Matrix_Forecast <- recoverNeighborsForecasting(Bellevue_Matrix, k, s, f) #recup voisins associ?s ? chaque obs
+  
+  
+  for(i in 1:nrow(testSet)){
+    
+    #R?cup?ration de la m?moire: Xt,..., Xt-s
+    testSet[i,1:s] <- Bellevue_Matrix[(n+i-1):(n+i-s),1]
+    
+    #r?cup?ration de la vitesse des voisins au date t+1,..., t+6
+    for(nbVoisin in 1:k){
+      testSet[i, (s+1):(s+nbPrevision*nbVoisin)] <- recoverNeighborsSpeed(Bellevue_Matrix,
+                                                                                        Neighbors_Matrix_Forecast,
+                                                                                        t = i) [nbVoisin,]
+    }
+      
+  }
+   
+   
+  testSet 
+  Neighbors_Matrix_Forecast
+  Bellevue_Matrix[1:12,1]
+  
+  
+  #######################################################
+  ########      PREVISIONS JUSQU'? 3h         ###########
+  #######################################################
+  
+  #matrice des pr?visions ? plusierus horizons
+  #initialisation
+  Forecasting_Matrix_BellevueX1 <- matrix( nrow = f, ncol = nbPrevision)
+  colnames(Forecasting_Matrix_BellevueX1) <- paste("forecasting", H, sep="-")
+  rownames(Forecasting_Matrix_BellevueX1) <- paste("Xhat:t+", 1:f, sep="")
+  Forecasting_Matrix_BellevueX1
+  
+  #pr?vision ? 30 min
+  Forecasting_Matrix_BellevueX1[,1] <- predict(model_0h30, testSet[,keptVar_0h30-6])
+  
+  #pr?vision ? 1h
+  Forecasting_Matrix_BellevueX1[2:f,2] <- predict(model_1h00, testSet[,keptVar_1h-6])[1:(f-1)]
+  
+  #pr?vision ? 1h30
+  Forecasting_Matrix_BellevueX1[3:f,3] <- predict(model_1h30, testSet[,keptVar_1h30-6])[1:(f-2)]
+  
+  #pr?vision ? 2h
+  Forecasting_Matrix_BellevueX1[4:f,4] <- predict(model_2h00, testSet[,keptVar_2h-6])[1:(f-3)]
+  
+  #pr?vision ? 2h30
+  Forecasting_Matrix_BellevueX1[5:f,5] <- predict(model_2h30, testSet[,keptVar_2h30-6])[1:(f-4)]
+  
+  #pr?vision ? 3h
+  Forecasting_Matrix_BellevueX1[6:f,6] <- predict(model_3h00, testSet[,keptVar_3h-6])[1:(f-5)]
+  
+  #matrice de pr?vision finale
+  Forecasting_Matrix_BellevueX1
+  
+
+  
+  
+  #######################################################
+  ########      VISUALISATION GRAPHIQUE         #########
+  #######################################################
+  
+  par(mfrow=c(3,2))
+
+  #pr?vision ? 30 min
+  min<-min(c(min(Bellevue_Matrix[(n+1):(n+f), 1]),min(Forecasting_Matrix_BellevueX1[,1], na.rm=TRUE)))
+  max<-max(c(max(Bellevue_Matrix[(n+1):(n+f), 1]),max(Forecasting_Matrix_BellevueX1[,1], na.rm=TRUE)))
+  plot(Date[(n+1):(n+f)], Bellevue_Matrix[(n+1):(n+f), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h", ylim=c(0.95*min, 1.05*max), main="Pr?vision ? 30 min")
+  lines(Date[(n+1):(n+f)], Forecasting_Matrix_BellevueX1[,1], col="red")
+  
+   #pr?vision ? 1h
+  min<-min(c(min(Bellevue_Matrix[(n+1):(n+f), 1]),min(Forecasting_Matrix_BellevueX1[,2], na.rm=TRUE)))
+  max<-max(c(max(Bellevue_Matrix[(n+1):(n+f), 1]),max(Forecasting_Matrix_BellevueX1[,2], na.rm=TRUE)))
+  plot(Date[(n+1):(n+f)], Bellevue_Matrix[(n+1):(n+f), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h", ylim=c(0.95*min, 1.05*max), main="Pr?vision ? 1h")
+  lines(Date[(n+1):(n+f)], Forecasting_Matrix_BellevueX1[,2], col="red")
+  
+   #pr?vision ? 1h30 min
+  min<-min(c(min(Bellevue_Matrix[(n+1):(n+f), 1]),min(Forecasting_Matrix_BellevueX1[,3], na.rm=TRUE)))
+  max<-max(c(max(Bellevue_Matrix[(n+1):(n+f), 1]),max(Forecasting_Matrix_BellevueX1[,3], na.rm=TRUE)))
+  plot(Date[(n+1):(n+f)], Bellevue_Matrix[(n+1):(n+f), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h", ylim=c(0.95*min, 1.05*max), main="Pr?vision ? 1h30")
+  lines(Date[(n+1):(n+f)], Forecasting_Matrix_BellevueX1[,3], col="red")
+  
+   #pr?vision ? 2h
+  min<-min(c(min(Bellevue_Matrix[(n+1):(n+f), 1]),min(Forecasting_Matrix_BellevueX1[,4], na.rm=TRUE)))
+  max<-max(c(max(Bellevue_Matrix[(n+1):(n+f), 1]),max(Forecasting_Matrix_BellevueX1[,4], na.rm=TRUE)))
+  plot(Date[(n+1):(n+f)], Bellevue_Matrix[(n+1):(n+f), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h", ylim=c(0.95*min, 1.05*max), main="Pr?vision ? 2h")
+  lines(Date[(n+1):(n+f)], Forecasting_Matrix_BellevueX1[,4], col="red")
+  
+   #pr?vision ? 2h30 min
+  min<-min(c(min(Bellevue_Matrix[(n+1):(n+f), 1]),min(Forecasting_Matrix_BellevueX1[,5], na.rm=TRUE)))
+  max<-max(c(max(Bellevue_Matrix[(n+1):(n+f), 1]),max(Forecasting_Matrix_BellevueX1[,5], na.rm=TRUE)))
+  plot(Date[(n+1):(n+f)], Bellevue_Matrix[(n+1):(n+f), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h", ylim=c(0.95*min, 1.05*max), main="Pr?vision ? 2h30")
+  lines(Date[(n+1):(n+f)], Forecasting_Matrix_BellevueX1[,5], col="red")
+  
+   #pr?vision ? 3h
+  min<-min(c(min(Bellevue_Matrix[(n+1):(n+f), 1]),min(Forecasting_Matrix_BellevueX1[,6], na.rm=TRUE)))
+  max<-max(c(max(Bellevue_Matrix[(n+1):(n+f), 1]),max(Forecasting_Matrix_BellevueX1[,6], na.rm=TRUE)))
+  plot(Date[(n+1):(n+f)], Bellevue_Matrix[(n+1):(n+f), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h", ylim=c(0.95*min, 1.05*max), main="Pr?vision ? 3h")
+  lines(Date[(n+1):(n+f)], Forecasting_Matrix_BellevueX1[,6], col="red")
+  
+
+  
+  #visualisations des previsions ? linstant t jusqu'? 3h.
+  par(mfrow=c(1,1))
+  plot(Date[(n+1):(n+f)], Bellevue_Matrix[(n+1):(n+f), 1], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Vitesse en km/h", ylim=c(38,64), main="Trac? des pr?visions de 30 min ? 3h")
+  
+  for(i in 0:(f-1)){
+    prev_6hours <- 1:6
+    for(j in 1:6){
+        prev_6hours[j] <- Forecasting_Matrix_BellevueX1[j+i,j]
+    }
+    lines(Date[(n+1+i):(n+i+6)], prev_6hours, col='turquoise1')
+  }
+  
+  
+  #visualisation des erreurs
+  absoluteErrors <- Forecasting_Matrix_BellevueX1
+  APE<- Forecasting_Matrix_BellevueX1
+  for(i in 1: f){
+      absoluteErrors[i,] <- abs(absoluteErrors[i,] - Bellevue_Matrix[n+f,1])
+      APE[i,] <- (absoluteErrors[i,]/ Bellevue_Matrix[n+f,1])*100
+  }
+  (absoluteErrors[,1]/Bellevue_Matrix[n+f,1])*100
+  
+  #plot absolute error
+  par(mfrow=c(3,2))
+  for(i in 1:6){
+    plot(Date[(n+1):(n+f)], absoluteErrors[,i], type = 'l', xlab = format(Date[n],'%A' ), ylab = "Absolute error",  main=paste("Pr?vision ? ", H[i], sep=""))
+  }
+  
+  #plot APE
+  par(mfrow=c(3,2))
+  for(i in 1:6){
+    plot(Date[(n+1):(n+f)], APE[,i], type = 'l', xlab = format(Date[n],'%A' ), ylab = "APE",  main=paste("Pr?vision ? ", H[i], sep=""))
+  }
+  
+  #plot MAPE
+  MAPE <- 1:nbPrevision
+  for(i in 1:nbPrevision){
+    MAPE[i] <- sum(APE[,i], na.rm =TRUE)*(100/f)
+  }
+  plot(1:nbPrevision, MAPE, xlab = "Pr?vision", ylab= "MAPE")
+  
+  
+
+
+```
+

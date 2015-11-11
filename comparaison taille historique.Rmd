@@ -1,0 +1,467 @@
+---
+title: "comparaison taille historique"
+author: "Fabien Baradel"
+date: "31 juillet 2015"
+output: html_document
+---
+
+
+CHEVIRE & BELLEVUE
+```{r}
+ #DATA LOADING
+ {
+load("Z:/RStudio/online_Chevire_hist_60.RData")
+load("Z:/RStudio/online_Chevire_hist_55.RData")
+load("Z:/RStudio/online_Chevire_hist_50.RData")
+load("Z:/RStudio/online_Chevire_hist_45.RData")
+load("Z:/RStudio/online_Chevire_hist_40.RData")
+load("Z:/RStudio/online_Chevire_hist_35.RData")
+load("Z:/RStudio/online_Chevire_hist_30.RData")
+load("Z:/RStudio/online_Chevire_hist_25.RData")
+load("Z:/RStudio/online_Chevire_hist_20.RData")
+load("Z:/RStudio/online_Chevire_hist_15.RData")
+load("Z:/RStudio/online_Chevire_hist_10.RData")
+load("Z:/RStudio/online_Chevire_hist_5.RData")
+
+
+load("Z:/RStudio/online_Bellevue_hist_60.RData")
+load("Z:/RStudio/online_Bellevue_hist_55.RData")
+load("Z:/RStudio/online_Bellevue_hist_50.RData")
+load("Z:/RStudio/online_Bellevue_hist_45.RData")
+load("Z:/RStudio/online_Bellevue_hist_40.RData")
+load("Z:/RStudio/online_Bellevue_hist_35.RData")
+load("Z:/RStudio/online_Bellevue_hist_30.RData")
+load("Z:/RStudio/online_Bellevue_hist_25.RData")
+load("Z:/RStudio/online_Bellevue_hist_20.RData")
+load("Z:/RStudio/online_Bellevue_hist_15.RData")
+load("Z:/RStudio/online_Bellevue_hist_10.RData")
+load("Z:/RStudio/online_Bellevue_hist_5.RData")
+}
+
+hist <- c(60.0,55.0,50.0,45.0,40.0,35.0,30.0,25.0,20.0,15.0,10.0,5.0)
+
+#### MAPE MEAN PER HISTORIC MEMORY
+
+MAPE_mean_chevire <- cbind(online_Chevire_hist_60$MAPE_mean,
+                   online_Chevire_hist_55$MAPE_mean,
+                   online_Chevire_hist_50$MAPE_mean,
+                   online_Chevire_hist_45$MAPE_mean,
+                   online_Chevire_hist_40$MAPE_mean,
+                   online_Chevire_hist_35$MAPE_mean,
+                   online_Chevire_hist_30$MAPE_mean,
+                   online_Chevire_hist_25$MAPE_mean,
+                   online_Chevire_hist_20$MAPE_mean,
+                   online_Chevire_hist_15$MAPE_mean,
+                   online_Chevire_hist_10$MAPE_mean,
+                   online_Chevire_hist_5$MAPE_mean)
+
+MAPE_mean_bellevue <- cbind(online_Bellevue_hist_60$MAPE_mean,
+                   online_Bellevue_hist_55$MAPE_mean,
+                   online_Bellevue_hist_50$MAPE_mean,
+                   online_Bellevue_hist_45$MAPE_mean,
+                   online_Bellevue_hist_40$MAPE_mean,
+                   online_Bellevue_hist_35$MAPE_mean,
+                   online_Bellevue_hist_30$MAPE_mean,
+                   online_Bellevue_hist_25$MAPE_mean,
+                   online_Bellevue_hist_20$MAPE_mean,
+                   online_Bellevue_hist_15$MAPE_mean,
+                   online_Bellevue_hist_10$MAPE_mean,
+                   online_Bellevue_hist_5$MAPE_mean)
+
+
+MAPE_mean <- array(NA, c(2,6,12), dimnames=list(c("Bellevue", "Chevire"),
+                                                H,
+                                                hist))
+MAPE_mean[1,,] <- MAPE_mean_bellevue
+MAPE_mean[2,,] <- MAPE_mean_chevire
+
+#h = 1
+hist_h_1 <- qplot(hist,MAPE_mean_bellevue[1,1:12])
+hist_h_1 <- hist_h_1 +geom_point(size=5) + ggtitle("Horizon de prévision à 30 min") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE (en %)")
+hist_h_1
+
+#h = 3
+#WMAPE_mean_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] <- MAPE_mean_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] - .065 car s = 10 avant
+hist_h_3 <- qplot(hist,MAPE_mean_bellevue[3,1:12])
+hist_h_3 <- hist_h_3 +geom_point(size=5) + ggtitle("Horizon de prévision à 1 heures et 30 minutes") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE (en %)")
+hist_h_3
+
+#h = 4
+#WMAPE_mean_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] <- MAPE_mean_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] - .025 car s = 10 avant
+hist_h_4 <- qplot(hist,MAPE_mean_bellevue[4,1:12])
+hist_h_4 <- hist_h_4 +geom_point(size=5) + ggtitle("Horizon de prévision à 2 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE (en %)")
+hist_h_4
+
+#h = 6
+#WMAPE_mean_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] <- MAPE_mean_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] - .065 car s = 10 avant
+hist_h_6 <- qplot(hist,MAPE_mean_bellevue[6,1:12])
+hist_h_6 <- hist_h_6 +geom_point(size=5) + ggtitle("Horizon de prévision à 3 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE (en %)")
+hist_h_6
+
+grid.arrange(hist_h_1, hist_h_3, hist_h_4, hist_h_6, ncol = 2, nrow = 2, top="MAPE en fonction de la taille de l'historique"  )
+
+# 
+# MAPE_mean_data.frame <- adply(MAPE_mean, c(1,2,3))
+# MAPE_mean_data.frame[,3] <- as.numeric(as.character(MAPE_mean_data.frame[,3]))
+# str(MAPE_mean_data.frame)
+# 
+#   rows <- which( MAPE_mean_data.frame[,2] == H[1] )
+#   p1 <- ggplot(data=MAPE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p1 <- p1 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )
+#   
+#   rows <- which( MAPE_mean_data.frame[,2] == H[2] )
+#   p2 <- ggplot(data=MAPE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p2 <- p2 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_mean_data.frame[,2] == H[3] )
+#   p3 <- ggplot(data=MAPE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p3 <- p3+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_mean_data.frame[,2] == H[4] )
+#   p4 <- ggplot(data=MAPE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p4 <- p4+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_mean_data.frame[,2] == H[5] )
+#   p5 <- ggplot(data=MAPE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p5 <- p5+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_mean_data.frame[,2] == H[6] )
+#   p6 <- ggplot(data=MAPE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p6 <- p6+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#  
+#   multiplot(p1,p2,p3,p4,p5,p6, cols=3 )
+#  
+ #### MAPE global MEDIAN PER HISTORIC MEMORY
+
+MAPE_median_chevire <- cbind(rowMedians(online_Chevire_hist_60$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_55$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_50$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_45$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_40$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_35$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_30$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_25$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_20$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_15$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_10$MAPE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_5$MAPE_global, na.rm = T)
+                     )
+
+MAPE_median_bellevue <- cbind(rowMedians(online_Bellevue_hist_60$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_55$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_50$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_45$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_40$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_35$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_30$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_25$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_20$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_15$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_10$MAPE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_5$MAPE_global, na.rm = T)
+                     )
+
+ MAPE_median <- array(NA, c(2,6,12), dimnames=list(c("Bellevue", "Chevire"),
+                                                H,
+                                                hist))
+ 
+ #h = 1
+ # MAPE_median_bellevue[1,c(1,2,3,4,6,7,8,9,10,11,12)] <- MAPE_median_bellevue[1,c(1,2,3,4,6,7,8,9,10,11,12)] - .005
+hist_h_1 <- qplot(hist,MAPE_median_bellevue[1,1:12])
+hist_h_1 <- hist_h_1 +geom_point(size=5) + ggtitle("Horizon de prévision à 30 min") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE médiane")
+hist_h_1
+
+#h = 3
+#WMAPE_median_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] <- MAPE_median_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] - .065 car s = 10 avant
+hist_h_3 <- qplot(hist,MAPE_median_bellevue[3,1:12])
+hist_h_3 <- hist_h_3 +geom_point(size=5) + ggtitle("Horizon de prévision à 1 heures et 30 minutes") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE médiane")
+hist_h_3
+
+#h = 4
+#WMAPE_median_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] <- MAPE_median_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] - .025 car s = 10 avant
+hist_h_4 <- qplot(hist,MAPE_median_bellevue[4,1:12])
+hist_h_4 <- hist_h_4 +geom_point(size=5) + ggtitle("Horizon de prévision à 2 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE médiane")
+hist_h_4
+
+#h = 6
+#WMAPE_median_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] <- MAPE_median_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] - .065 car s = 10 avant
+hist_h_6 <- qplot(hist,MAPE_median_bellevue[6,1:12])
+hist_h_6 <- hist_h_6 +geom_point(size=5) + ggtitle("Horizon de prévision à 3 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("MAPE médiane")
+hist_h_6
+
+grid.arrange(hist_h_1, hist_h_3, hist_h_4, hist_h_6, ncol = 2, nrow = 2, top="MAPE médianes en fonction de la taille de l'historique"  )
+
+
+# MAPE_median[1,,] <- MAPE_median_bellevue
+# MAPE_median[2,,] <- MAPE_median_chevire
+# 
+# MAPE_median_data.frame <- adply(MAPE_median, c(1,2,3))
+# MAPE_median_data.frame[,3] <- as.numeric(as.character(MAPE_median_data.frame[,3]))
+# str(MAPE_median_data.frame)
+# 
+#   rows <- which( MAPE_median_data.frame[,2] == H[1] )
+#   p1 <- ggplot(data=MAPE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p1 <- p1 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )
+#   
+#   rows <- which( MAPE_median_data.frame[,2] == H[2] )
+#   p2 <- ggplot(data=MAPE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p2 <- p2 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_median_data.frame[,2] == H[3] )
+#   p3 <- ggplot(data=MAPE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p3 <- p3+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_median_data.frame[,2] == H[4] )
+#   p4 <- ggplot(data=MAPE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p4 <- p4+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_median_data.frame[,2] == H[5] )
+#   p5 <- ggplot(data=MAPE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p5 <- p5+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( MAPE_median_data.frame[,2] == H[6] )
+#   p6 <- ggplot(data=MAPE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p6 <- p6+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#  
+#   multiplot(p1,p2,p3,p4,p5,p6, cols=3)
+#  
+
+#### RMSE MEAN PER HISTORIC MEMORY
+ 
+ RMSE_mean_chevire <- cbind(online_Chevire_hist_60$RMSE_mean,
+                   online_Chevire_hist_55$RMSE_mean,
+                   online_Chevire_hist_50$RMSE_mean,
+                   online_Chevire_hist_45$RMSE_mean,
+                   online_Chevire_hist_40$RMSE_mean,
+                   online_Chevire_hist_35$RMSE_mean,
+                   online_Chevire_hist_30$RMSE_mean,
+                   online_Chevire_hist_25$RMSE_mean,
+                   online_Chevire_hist_20$RMSE_mean,
+                   online_Chevire_hist_15$RMSE_mean,
+                   online_Chevire_hist_10$RMSE_mean,
+                   online_Chevire_hist_5$RMSE_mean)
+
+RMSE_mean_bellevue <- cbind(online_Bellevue_hist_60$RMSE_mean,
+                   online_Bellevue_hist_55$RMSE_mean,
+                   online_Bellevue_hist_50$RMSE_mean,
+                   online_Bellevue_hist_45$RMSE_mean,
+                   online_Bellevue_hist_40$RMSE_mean,
+                   online_Bellevue_hist_35$RMSE_mean,
+                   online_Bellevue_hist_30$RMSE_mean,
+                   online_Bellevue_hist_25$RMSE_mean,
+                   online_Bellevue_hist_20$RMSE_mean,
+                   online_Bellevue_hist_15$RMSE_mean,
+                   online_Bellevue_hist_10$RMSE_mean,
+                   online_Bellevue_hist_5$RMSE_mean)
+
+RMSE_mean <- array(NA, c(2,6,12), dimnames=list(c("Bellevue", "Chevire"),
+                                                H,
+                                                hist))
+#h = 1
+hist_h_1 <- qplot(hist,RMSE_mean_bellevue[1,1:12])
+hist_h_1 <- hist_h_1 +geom_point(size=5) + ggtitle("Horizon de prévision à 30 min") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE moyen")
+hist_h_1
+
+#h = 3
+hist_h_3 <- qplot(hist,RMSE_mean_bellevue[3,1:12])
+hist_h_3 <- hist_h_3 +geom_point(size=5) + ggtitle("Horizon de prévision à 1 heures et 30 minutes") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE moyen")
+hist_h_3
+
+#h = 4
+#WRMSE_mean_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] <- RMSE_mean_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] - .005 car s = 10 avant
+hist_h_4 <- qplot(hist,RMSE_mean_bellevue[4,1:12])
+hist_h_4 <- hist_h_4 +geom_point(size=5) + ggtitle("Horizon de prévision à 2 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE moyen")
+hist_h_4
+
+#h = 6
+#WRMSE_mean_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] <- RMSE_mean_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] - .025 car s = 10 avant
+hist_h_6 <- qplot(hist,RMSE_mean_bellevue[6,1:12])
+hist_h_6 <- hist_h_6 +geom_point(size=5) + ggtitle("Horizon de prévision à 3 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE moyen")
+hist_h_6
+
+grid.arrange(hist_h_1, hist_h_3, hist_h_4, hist_h_6, ncol = 2, nrow = 2, top="RMSE moyens en fonction de la taille de l'historique"  )
+
+# 
+# RMSE_mean[1,,] <- RMSE_mean_bellevue
+# RMSE_mean[2,,] <- RMSE_mean_chevire
+# 
+# RMSE_mean_data.frame <- adply(RMSE_mean, c(1,2,3))
+# RMSE_mean_data.frame[,3] <- as.numeric(as.character(RMSE_mean_data.frame[,3]))
+# str(RMSE_mean_data.frame)
+# 
+#   rows <- which( RMSE_mean_data.frame[,2] == H[1] )
+#   p1 <- ggplot(data=RMSE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p1 <- p1 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )
+#   
+#   rows <- which( RMSE_mean_data.frame[,2] == H[2] )
+#   p2 <- ggplot(data=RMSE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p2 <- p2 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_mean_data.frame[,2] == H[3] )
+#   p3 <- ggplot(data=RMSE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p3 <- p3+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_mean_data.frame[,2] == H[4] )
+#   p4 <- ggplot(data=RMSE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p4 <- p4+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_mean_data.frame[,2] == H[5] )
+#   p5 <- ggplot(data=RMSE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p5 <- p5+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_mean_data.frame[,2] == H[6] )
+#   p6 <- ggplot(data=RMSE_mean_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p6 <- p6+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#  
+#   multiplot(p1,p2,p3,p4,p5,p6, cols=3)
+#  
+#### RMSE global MEDIAN PER HISTORIC MEMORY
+
+RMSE_median_chevire <- cbind(rowMedians(online_Chevire_hist_60$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_55$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_50$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_45$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_40$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_35$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_30$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_25$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_20$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_15$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_10$RMSE_global, na.rm = T),
+                     rowMedians(online_Chevire_hist_5$RMSE_global, na.rm = T)
+                     )
+
+RMSE_median_bellevue <- cbind(rowMedians(online_Bellevue_hist_60$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_55$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_50$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_45$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_40$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_35$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_30$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_25$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_20$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_15$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_10$RMSE_global, na.rm = T),
+                     rowMedians(online_Bellevue_hist_5$RMSE_global, na.rm = T)
+                     )
+
+ RMSE_median <- array(NA, c(2,6,12), dimnames=list(c("Bellevue", "Chevire"),
+                                                H,
+                                                hist))
+ 
+ #h = 1
+hist_h_1 <- qplot(hist,RMSE_median_bellevue[1,1:12])
+hist_h_1 <- hist_h_1 +geom_point(size=5) + ggtitle("Horizon de prévision à 30 min") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE médian")
+hist_h_1
+
+#h = 3
+hist_h_3 <- qplot(hist,RMSE_median_bellevue[3,1:12])
+hist_h_3 <- hist_h_3 +geom_point(size=5) + ggtitle("Horizon de prévision à 1 heures et 30 minutes") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE médian")
+hist_h_3
+
+#h = 4
+#WRMSE_median_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] <- RMSE_median_bellevue[4,c(1,2,3,4,6,7,8,9,10,11,12)] - .005 car s = 10 avant
+hist_h_4 <- qplot(hist,RMSE_median_bellevue[4,1:12])
+hist_h_4 <- hist_h_4 +geom_point(size=5) + ggtitle("Horizon de prévision à 2 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE médian")
+hist_h_4
+
+#h = 6
+#WRMSE_median_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] <- RMSE_median_bellevue[6,c(1,2,3,4,6,7,8,9,10,11,12)] - .025 car s = 10 avant
+hist_h_6 <- qplot(hist,RMSE_median_bellevue[6,1:12])
+hist_h_6 <- hist_h_6 +geom_point(size=5) + ggtitle("Horizon de prévision à 3 heures") + geom_smooth(method = "loess" ) + xlab("Taille de l'historique (en jours)") + ylab("RMSE médian")
+hist_h_6
+
+grid.arrange(hist_h_1, hist_h_3, hist_h_4, hist_h_6, ncol = 2, nrow = 2, top="RMSE médians en fonction de la taille de l'historique"  )
+
+ 
+#  
+# RMSE_median[1,,] <- RMSE_median_bellevue
+# RMSE_median[2,,] <- RMSE_median_chevire
+# 
+# RMSE_median_data.frame <- adply(RMSE_median, c(1,2,3))
+# RMSE_median_data.frame[,3] <- as.numeric(as.character(RMSE_median_data.frame[,3]))
+# str(RMSE_median_data.frame)
+# 
+#   rows <- which( RMSE_median_data.frame[,2] == H[1] )
+#   p1 <- ggplot(data=RMSE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p1 <- p1 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )
+#   
+#   rows <- which( RMSE_median_data.frame[,2] == H[2] )
+#   p2 <- ggplot(data=RMSE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p2 <- p2 + geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_median_data.frame[,2] == H[3] )
+#   p3 <- ggplot(data=RMSE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p3 <- p3+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_median_data.frame[,2] == H[4] )
+#   p4 <- ggplot(data=RMSE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p4 <- p4+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_median_data.frame[,2] == H[5] )
+#   p5 <- ggplot(data=RMSE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p5 <- p5+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#   
+#   rows <- which( RMSE_median_data.frame[,2] == H[6] )
+#   p6 <- ggplot(data=RMSE_median_data.frame[rows,], aes(x=X3, y=V1, colour=X1, shape=X1))
+#   p6 <- p6+ geom_point(size=5) + ggtitle("My beautiful enzyme") + geom_smooth(method = "loess" )+ theme(legend.position="none")
+#  
+#   multiplot(p1,p2,p3,p4,p5,p6, cols=3)
+ 
+#### COMPUTING TIME
+ par(mfrow=c(1,1))
+ time_chevire <- c(online_Chevire_hist_60$elapsed,
+                   online_Chevire_hist_55$elapsed,
+                   online_Chevire_hist_50$elapsed,
+                   online_Chevire_hist_45$elapsed,
+                   online_Chevire_hist_40$elapsed,
+                   online_Chevire_hist_35$elapsed,
+                   online_Chevire_hist_30$elapsed,
+                   online_Chevire_hist_25$elapsed,
+                   online_Chevire_hist_20$elapsed,
+                   online_Chevire_hist_15$elapsed,
+                   online_Chevire_hist_10$elapsed,
+                   online_Chevire_hist_5$elapsed)
+ time_chevire <- time_chevire/177
+ 
+ time_bellevue <- c(online_Bellevue_hist_60$elapsed,
+                    online_Bellevue_hist_55$elapsed,
+                    online_Bellevue_hist_50$elapsed,
+                    online_Bellevue_hist_45$elapsed,
+                    online_Bellevue_hist_40$elapsed,
+                    online_Bellevue_hist_35$elapsed,
+                    online_Bellevue_hist_30$elapsed,
+                    online_Bellevue_hist_25$elapsed,
+                    online_Bellevue_hist_20$elapsed,
+                    online_Bellevue_hist_15$elapsed,
+                    online_Bellevue_hist_10$elapsed,
+                    online_Bellevue_hist_5$elapsed)
+ time_bellevue <- time_bellevue/144
+ # colMeansMAPE_mean = colMeans(MAPE_mean_bellevue)
+ # colMeansMAPE_mean[-5] = colMeans(MAPE_mean_bellevue)[-5]-.011
+ data_time <- matrix(0, 3,12, dimnames=list(c("time_bellevue", "colMeansMAPE_mean", "size"), hist) )
+ data_time[1,] <- time_bellevue
+ data_time[2,] <-colMeansMAPE_mean
+ size <- c(60,55,50,45,40,35,30,25,20,15,10,5)
+ data_time[3,] <- size
+ data_time <- as.data.frame(data_time)
+ str(data_time)
+ head(data_time)
+ time_elapsed <- ggplot(data_time, aes(x = time_bellevue, y = colMeansMAPE_mean) )
+ time_elapsed <- time_elapsed +geom_point(size=5) + ggtitle("Lien entre temps de calcul, perfomance des prévisions et taille de l'historique glissant") + geom_smooth(method = "loess" ) + ylab("MAPE moyenne sur les 6 horizons de prévision") + xlab("Temps de calcul des prévisions par section (en secondes)")
+ time_elapsed <- time_elapsed + annotate("text",x = 3.2, y = 2.96, label = "Historique de taille 30 jours") + geom_segment(aes(x = 3, y = 2.95, xend = 2.43, yend = 2.875), arrow = arrow(length = unit(0.5, "cm")))
+ time_elapsed <- time_elapsed + annotate("text",x = 2.8, y = 3.2, label = "Historique de taille 5 jours") + geom_segment(aes(x = 2, y = 3.2, xend = 1, yend = 3.2), arrow = arrow(length = unit(0.5, "cm")))
+ time_elapsed <- time_elapsed + annotate("text",x = 5, y = 2.91, label = "Historique de taille 60 jours") + geom_segment(aes(x = 5.8, y = 2.9, xend = 6.2, yend = 2.82), arrow = arrow(length = unit(0.5, "cm"))) +geom_text(aes(label=size),hjust=.5, vjust=1.6, size=5, colour = 'blue')
+ time_elapsed
+ hist
+ 
+ 
+ time_simple <- qplot(hist, time_bellevue)
+ time_simple <- time_simple +geom_point(size=5) + ggtitle("Temps de calcul en fonction de la taille de l'historique") + geom_smooth(method = "loess" ) + ylab("Temps de calcul des prévisions par section (en secondes)") + xlab("Taille de l'historique glissant (en jours)")
+ time_simple
+ 
+  
+```
+
+
+

@@ -1,0 +1,459 @@
+---
+title: "Untitled"
+author: "Fabien Baradel"
+date: "15 juillet 2015"
+output: pdf_document
+---
+
+
+```{r}
+
+#parallelisation using doParallel
+svm_build_N_predict.online.opt_svm <- function(h, s, eps, gamma, cost, X_Y_train,X_test  ){
+      model <- svm( X_Y_train[,(nbHorizons+1):(nbHorizons+s)], X_Y_train[,h],
+                  kernel='radial', epsilon = eps,
+                  gamma =  gamma, cost = cost) #mod?le
+      return(predict(model, X_test[,(nbHorizons+1):(nbHorizons+s)], na.action = na.exclude) )
+}
+
+
+error_SVM_per_horizon.online <- function (mat_online, mat_test, real_Y,
+                                          s, eps, gamma, cost, FOCUS_SECTIONS, h){
+  mape <- foreach (section = icount(length(FOCUS_SECTIONS)), .combine='rbind', .multicombine=TRUE, .packages='e1071',
+                    .export = c('svm_build_N_predict.online.opt_svm','mat_online','mat_nov',
+                                'sample_sections','nbHorizons','gamma_per_horizon', 'h', 'real_Y') ) %dopar% {
+      X_Y_train <- mat_online[FOCUS_SECTIONS[section],, ] #variables explicatives et r�ponse
+      X_test <- mat_test[FOCUS_SECTIONS[section],,] #variables explicatives de la test
+              
+      sum( abs(svm_build_N_predict.online.opt_svm(h, s, eps, gamma, cost) - real_Y[FOCUS_SECTIONS[section],]) / real_Y[FOCUS_SECTIONS[section],] ) / ncol(real_Y) *100 #v�rifier
+                                }
+  return(mean(mape))
+  }
+
+error_SVM_per_horizon.online.no_parallel <-function (mat_online, mat_test, real_Y,
+                                          s, eps, gamma, cost, FOCUS_SECTIONS, h){
+    res <- 0
+    for( section in length(FOCUS_SECTIONS)){
+      X_Y_train <- mat_online[FOCUS_SECTIONS[section],, ] #variables explicatives et réponse
+      X_test <- mat_test[FOCUS_SECTIONS[section],,] #variables explicatives de la test
+              
+      res <- res + mean(sum( abs(svm_build_N_predict.online.opt_svm(h, s, eps, gamma, cost, X_Y_train,X_test) - real_Y[FOCUS_SECTIONS[section],]) / real_Y[FOCUS_SECTIONS[section],] ) / ncol(real_Y) *100 ) #vérifier
+    }
+    res <- res/length(FOCUS_SECTIONS)
+  
+  return(res)
+  }
+
+
+optSVM_per_horizon.online <- function(s_opt, maxtime, mat_online, sample_sections, mat_test, x_svr, focus){
+  
+  problem_function_per_horizon.online <- function(f,x, s, h, mat_online, mat_test) #(f,g,x)
+  {
+      real_Y <- mat_test[,,h] #vrai obs à l'instant t+h
+  #     Objective function value f(x)
+      f = error_SVM_per_horizon.online (mat_online, mat_test, real_Y, s = s, eps = x[1], gamma = x[2], cost = x[3],FOCUS_SECTIONS = sample_sections, h = h )
+
+      #Pas de G ici!
+      g <- NULL
+  #     Store arguments in list
+      output <- list( f , g, x )
+      return(output)
+  }
+  
+  {
+  ########################################################################
+  ########################################################################
+  ########################################################################
+  dyn.load("midaco.dll") # load MIDACO library
+  print("micado.dll ok!")
+  ########################################################################
+  midaco <- function(n,ni,m,me,x,f,g,xl,xu,iflag,istop,param,rw,lrw,iw,liw,key) 
+  ########################################################################
+  { out <- .Fortran( "midaco", i01=as.integer(1),i02=as.integer(n),
+      i03=as.integer(ni),i04=as.integer(m),i05=as.integer(me),i06=as.double(x),
+      i07=as.double(f),i08=as.double(g),i09=as.double(xl),i11=as.double(xu),
+      i12=as.integer(iflag),i13=as.integer(istop),i14=as.double(param),
+      i15=as.double(rw),i16=as.integer(lrw),i17=as.integer(iw),
+      i18 = as.integer(liw),i19 = as.character(key) )      
+  out <- list( out$i06, out$i12, out$i13, out$i15, out$i17); return(out) }
+  ########################################################################
+  midaco_print <- function(c,printeveal,save2file,iflag,istop,f,g,x,xl,xu,
+                         n,ni,m,me,rw,lrw,maxeval,maxtime,param,key) 
+  ########################################################################
+  { out <- .Fortran( "midaco_print", i01=as.integer(c),i02=as.integer(printeval), 
+      i03=as.integer(save2file),i04=as.integer(iflag),i05=as.integer(istop),  
+      i06=as.double(f),i07=as.double(g),i08=as.double(x),i09=as.double(xl),
+      i10=as.double(xu),i11=as.integer(n),i12=as.integer(ni),i13=as.integer(m),                        
+      i14=as.integer(me),i15=as.double(rw),i16=as.integer(lrw),
+      i17=as.integer(maxeval),i18=as.integer(maxtime),i19=as.double(param),
+      i20=as.integer(1),i21=as.character(key) ); return( out$i04 ) }
+  ########################################################################
+  ########################################################################
+  ########################################################################
+  #     Specify MIDACO License-Key
+      key='MIDACO_LIMITED_VERSION___[CREATIVE_COMMONS_BY-NC-ND_LICENSE]'
+  ########################################################################
+  #
+  }
+  
+  #SETTINGS
+  {
+  
+  # set paralellisation settings 
+  
+  
+  #     Step 1.A : Define problem dimensions
+  #     ************************************ 
+      n  = 3  # Number of variables (in total)
+      ni = 1  # Number of integer variables (0 <= NI <= N)
+      m  = 0  # Number of constraints (in total)
+      me = 0  # Number of equality constraints (0 <= ME <= M)
+  #
+  #     Step 1.B : Define lower and upper bounds: 'XL' and 'XU'
+  #     *******************************************************
+      xl = double(length = n)
+      xu = double(length = n)
+      xl [] <- c(0.001, 0.001, 1)
+      xu [] <- c(0.3, 15, 25)
+  #     
+      
+  #     Step 1.C : Define starting point 'X'
+  #     ************************************ 
+      #doe laterat the beginning of loop
+      
+        
+  ########################################################################
+  #
+  #     Step 2.A : Define stopping criteria
+  #     ***********************************
+      maxeval = 10000    # Maximum evaluation budget (e.g. 1000000)
+      #maxtime = 60*7 #60*12*n_sample #nb minutes fois le nb de section    # Maximum time limit (e.g. 60*60*24 = 1 Day)
+  #
+  #     Step 2.B : Choose printing options
+  #     **********************************
+      printeval = 100 # Print-Frequency for current best solution (e.g. 1000)
+      save2file = 1    # Save SCREEN and SOLUTION to TXT-files [0=NO/1=YES]
+      
+  ########################################################################
+  #
+  #     Step 3 : Choose MIDACO parameters (ONLY FOR ADVANCED USERS)
+  #     *********************************
+      param = double(length = 9)
+      param[ 1] =  0.0   # ACCURACY      (default value is 0.001) 
+      param[ 2] =  0.0   # RANDOM-SEED   (e.g. 1, 2, 3,... 1000)
+      param[ 3] =  0.0   # FSTOP  
+      param[ 4] =  0.0 #8.0   # AUTOSTOP      (e.g. 1, 5, 20, 100,... 500)
+      param[ 5] =  0.0   # ORACLE  
+      param[ 6] =  focus #10.0  # FOCUS         (e.g. +/- 10, 500,... 100000)
+      param[ 7] =  0.0   # ANTS          (e.g. 2, 10, 50, 100,... 500)
+      param[ 8] =  0.0 #5.0   # KERNEL        (e.g. 2, 5, 15, 30,... 100)
+      param[ 9] =  0.0   # CHARACTER
+     
+  #     Note: The default value for all parameters is 0.          
+  #           See the MIDACO User Manual for more details.
+
+  }
+    
+  #############################
+  #### APPROCHE HORIZON #######
+  #############################
+  
+  
+  EPS <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "EPS"))
+  GAMMA <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "GAMMA"))
+  COST <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "COST"))
+  MAPE <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "MAPE"))
+
+      
+
+    for(h in 1:nbHorizons){
+      x[] <- x_svr[,h]
+      print(paste("opt SVR h = ", h))
+  #other settings
+  {
+  ########################################################################
+  ########################################################################
+  ########################################################################
+  #     Initializations and Workspace Applocation
+      f = double(length = 1)
+      g = double(length = m)
+      #z, q, r
+      lrw = 2*n+2*m+1000
+      liw = 2*n+1+1000
+      rw = double(length = lrw)
+      iw = integer(length = liw)
+      iflag=0
+      istop=0
+  ########################################################################
+  #         
+  #     Call MIDACO by Reverse Communication
+  #      
+  ########################################################################
+  midaco_print(1,printeveal,save2file,iflag,istop,f,g,x,xl,xu,
+             n,ni,m,me,rw,lrw,maxeval,maxtime,param,key)
+
+  }  
+
+      
+  while( istop == 0) 
+  {
+      print("avant")
+      result = problem_function_per_horizon.online( f , x, s = s_opt[h], h, mat_online, mat_test)########
+      print("apres")
+
+      f = result[[1]]
+      g = result[[2]]
+
+      out = midaco(n,ni,m,me,x,f,g,xl,xu,iflag,istop,param,rw,lrw,iw,liw,key) 
+
+      x     = out[[1]]
+      iflag = out[[2]]
+      istop = out[[3]]
+      rw    = out[[4]]
+      
+      iw    = out[[5]]
+
+      iflag = midaco_print(2,printeveal,save2file,iflag,istop,f,g,x,xl,xu,
+                           n,ni,m,me,rw,lrw,maxeval,maxtime,param,key)
+      print(result[[3]])
+      print(result[[1]])
+  }
+  
+  result = problem_function_per_horizon.online( f , x, s_opt[h] , h, mat_online, mat_test)  # x est ce que nous cherchons!    
+
+      MAPE[h,1] = result[[1]]
+      EPS[h, 1] = result[[3]][1]
+      GAMMA[h, 1] = result[[3]][2]
+      COST[h, 1] = result[[3]][3]
+    }
+    
+    
+    list.result <- list("EPS"=EPS, "GAMMA"=GAMMA, "COST"=COST, "MAPE"=MAPE ,"implementation_time"= stime)
+    return(list.result)
+  }
+
+
+
+optSVM_per_horizon.online.parallel <- function(s_opt, maxtime, mat_online, size_sample, mat_test, x_svr, focus){
+  sample_sections <- sample(1:dim(mat_online)[1], size_sample)
+  
+  problem_function_per_horizon.online.no_parallel <- function(f,x, s, h, mat_online, mat_test) #(f,g,x)
+  {
+      real_Y <- mat_test[,,h] #vrai obs à l'instant t+h
+  #     Objective function value f(x)
+      f = error_SVM_per_horizon.online.no_parallel (mat_online, mat_test, real_Y, s = s,
+                                                    eps = x[1], gamma = x[2], cost = x[3],
+                                                    FOCUS_SECTIONS = sample_sections, h = h )
+
+      #Pas de G ici!
+      g <- NULL
+  #     Store arguments in list
+      output <- list( f , g, x )
+      return(output)
+  }
+  
+  {
+  ########################################################################
+  ########################################################################
+  ########################################################################
+  dyn.load("midaco.dll") # load MIDACO library
+  ########################################################################
+midaco <- function(P,n,ni,m,me,x,f,g,xl,xu,iflag,istop,param,rw,lrw,iw,liw,key) 
+########################################################################
+{ out <- .Fortran( "midaco", i01=as.integer(P),i02=as.integer(n),
+      i03=as.integer(ni),i04=as.integer(m),i05=as.integer(me),i06=as.double(x),
+      i07=as.double(f),i08=as.double(g),i09=as.double(xl),i11=as.double(xu),
+      i12=as.integer(iflag),i13=as.integer(istop),i14=as.double(param),
+      i15=as.double(rw),i16=as.integer(lrw),i17=as.integer(iw),
+      i18 = as.integer(liw),i19 = as.character(key) )      
+out <- list( out$i06, out$i12, out$i13, out$i15, out$i17); return(out) }
+########################################################################
+midaco_print <- function(c,printeveal,save2file,iflag,istop,f,g,x,xl,xu,
+                         n,ni,m,me,rw,lrw,maxeval,maxtime,param,P,key) 
+########################################################################
+{ out <- .Fortran( "midaco_print", i01=as.integer(c),i02=as.integer(printeval), 
+      i03=as.integer(save2file),i04=as.integer(iflag),i05=as.integer(istop),  
+      i06=as.double(f),i07=as.double(g),i08=as.double(x),i09=as.double(xl),
+      i10=as.double(xu),i11=as.integer(n),i12=as.integer(ni),i13=as.integer(m),                        
+      i14=as.integer(me),i15=as.double(rw),i16=as.integer(lrw),
+      i17=as.integer(maxeval),i18=as.integer(maxtime),i19=as.double(param),
+      i20=as.integer(P),i21=as.character(key) ); return( out$i04 ) }
+########################################################################
+########################################################################
+########################################################################
+#     Specify MIDACO License-Key
+      key='MIDACO_LIMITED_VERSION___[CREATIVE_COMMONS_BY-NC-ND_LICENSE]'
+########################################################################
+#      
+  }
+  
+  #SETTINGS
+  {
+  
+  # set paralellisation settings 
+#     library(foreach)
+#     library(doParallel)
+#     cl <- makeCluster(20) #to remove 
+#     registerDoParallel(cl) #to remove
+    P <-  getDoParWorkers()
+ ###!!!
+  
+  #     Step 1.A : Define problem dimensions
+  #     ************************************ 
+      n  = 3  # Number of variables (in total)
+      ni = 1  # Number of integer variables (0 <= NI <= N)
+      m  = 0  # Number of constraints (in total)
+      me = 0  # Number of equality constraints (0 <= ME <= M)
+  #
+  #     Step 1.B : Define lower and upper bounds: 'XL' and 'XU'
+  #     *******************************************************
+      xl = double(length = n)
+      xu = double(length = n)
+      xl [] <- c(0.001, 0.001, 1)
+      xu [] <- c(0.3, 15, 25)
+  #     
+      
+  #     Step 1.C : Define starting point 'X'
+  #     ************************************ 
+      #doe laterat the beginning of loop
+      x = double(length = n*P)
+        
+  ########################################################################
+  #
+  #     Step 2.A : Define stopping criteria
+  #     ***********************************
+      maxeval = 150   # Maximum evaluation budget (e.g. 1000000)
+      #maxtime = 60*7 #60*12*n_sample #nb minutes fois le nb de section    # Maximum time limit (e.g. 60*60*24 = 1 Day)
+  #
+  #     Step 2.B : Choose printing options
+  #     **********************************
+      printeval = 100 # Print-Frequency for current best solution (e.g. 1000)
+      save2file = 1    # Save SCREEN and SOLUTION to TXT-files [0=NO/1=YES]
+      
+  ########################################################################
+  #
+  #     Step 3 : Choose MIDACO parameters (ONLY FOR ADVANCED USERS)
+  #     *********************************
+      param = double(length = 9)
+      param[ 1] =  0.0   # ACCURACY      (default value is 0.001) 
+      param[ 2] =  0.0   # RANDOM-SEED   (e.g. 1, 2, 3,... 1000)
+      param[ 3] =  0.0   # FSTOP  
+      param[ 4] =  0.0 #8.0   # AUTOSTOP      (e.g. 1, 5, 20, 100,... 500)
+      param[ 5] =  0.0   # ORACLE  
+      param[ 6] =  focus #10.0  # FOCUS         (e.g. +/- 10, 500,... 100000)
+      param[ 7] =  0.0   # ANTS          (e.g. 2, 10, 50, 100,... 500)
+      param[ 8] =  0.0 #5.0   # KERNEL        (e.g. 2, 5, 15, 30,... 100)
+      param[ 9] =  0.0   # CHARACTER
+     
+  #     Note: The default value for all parameters is 0.          
+  #           See the MIDACO User Manual for more details.
+
+  }
+    
+  #############################
+  #### APPROCHE HORIZON #######
+  #############################
+  
+  
+  EPS <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "EPS"))
+  GAMMA <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "GAMMA"))
+  COST <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "COST"))
+  MAPE <- matrix(0, ncol=1, nrow=nbHorizons, dimnames= list( H, "MAPE"))
+
+      
+
+    for(h in 1:nbHorizons){
+      x[] = rep(x_svr[,h], P) # starting point
+      print(paste("opt SVR h = ", h))
+  #other settings
+  {
+  ########################################################################
+  ########################################################################
+  ########################################################################
+  #     Initializations and Workspace Applocation
+      f = double(length = 1*P)
+      g = double(length = m*P)   
+      z = double(length = n)  
+      q = double(length = 1)  
+      r = double(length = m)      
+      lrw = 200*n+2*m+1000
+      liw = 2*n+P+1000
+      rw = double(length = lrw)
+      iw = integer(length = liw)
+      iflag=0
+      istop=0
+  ########################################################################
+  #         
+  #     Call MIDACO by Reverse Communication
+  #      
+  ########################################################################
+  midaco_print(1,printeveal,save2file,iflag,istop,f,g,x,xl,xu,
+             n,ni,m,me,rw,lrw,maxeval,maxtime,param,P,key)
+
+  }  
+
+      
+  while( istop == 0) 
+  {
+#       #simple    
+#       print("avant")
+#       result = problem_function_per_horizon.online.npo_parallel( f , x, s = s_opt[h], h, mat_online, mat_test)########
+#       f = result[[1]]
+#       g = result[[2]]
+#       print("apres")
+      
+      #parallel
+      loopoutput <- foreach(c=1:P,  .combine='c', .packages='e1071', .export=c('error_SVM_per_horizon.online.no_parallel',
+                                                                               'svm_build_N_predict.online.opt_svm',
+                                                                               'nbHorizons')) %dopar% 
+      {
+            for(i in 1:n){ z[i] = x[(c-1)*n+i] }
+
+            result = problem_function_per_horizon.online.no_parallel( f , z, s = s_opt[h], h, mat_online, mat_test)
+
+            q = result[[1]]
+            r = result[[2]] #
+
+            loopoutput <- list( q , r )
+      }     
+
+
+      for(c in 1:P) 
+      {
+        r = loopoutput[[(c-1)*2+1]]
+        q = loopoutput[[(c-1)*2+2]] #
+
+        f[c] = r
+        for(i in 1:m){ g[(c-1)*m+i] = q[i] } #
+      }
+
+      out = midaco(P,n,ni,m,me,x,f,g,xl,xu,iflag,istop,param,rw,lrw,iw,liw,key) 
+      x     = out[[1]]
+      iflag = out[[2]]
+      istop = out[[3]]
+      rw    = out[[4]]
+      
+      iw    = out[[5]]
+
+       iflag = midaco_print(2,printeveal,save2file,iflag,istop,f,g,x,xl,xu,
+                           n,ni,m,me,rw,lrw,maxeval,maxtime,param,P,key)
+      
+  }
+  
+  result = problem_function_per_horizon.online.no_parallel( f , x[(which.min(f)-1)*3+(1:n)], s = s_opt[h], h, mat_online, mat_test)  # x est ce que nous cherchons!    
+
+      MAPE[h,1] = result[[1]]
+      EPS[h, 1] = result[[3]][1]
+      GAMMA[h, 1] = result[[3]][2]
+      COST[h, 1] = result[[3]][3]
+    }
+    
+    
+    list.result <- list("EPS"=EPS, "GAMMA"=GAMMA, "COST"=COST, "MAPE"=MAPE ,"implementation_time"= stime)
+    return(list.result)
+  }
+
+
+
+```
+

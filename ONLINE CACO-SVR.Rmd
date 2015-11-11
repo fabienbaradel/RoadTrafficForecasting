@@ -1,0 +1,287 @@
+---
+title: "ONLINE CACO-SVR"
+author: "Fabien Baradel"
+date: "20 juillet 2015"
+output: pdf_document
+---
+
+
+Estimation de la taille de mémoire optimale pour les six horizons.
+```{r}
+
+   #construit et fait des prédiction pour la phase d'estimation de la méoire optimale
+   svm_build_N_predict.s_opt <- function(h, s){
+      model <- svm( X_train[,(nbHorizons+1):(nbHorizons+s)], Y_train[,h], kernel='radial', 
+                    epsilon = eps_per_horizon[h],gamma =  gamma_per_horizon, 
+                    cost = cost_per_horizon[h]
+                  ) #mod?le
+      return(predict(model, X_test[,(nbHorizons+1):(nbHorizons+s)], na.action = na.exclude) )
+      #
+    }
+
+   
+   #trouve les S optimaux pour chaque horizons en construisant le mod�le sur l'historique et testant sur le derniere semaine
+   #l'estimation se fait sur un nombre de section (size_selected_section) que l'on tire  par sondage aléatoire san remise
+   find_S.foreach.online <- function (mat_online, mat_Y_test, s_max, size_selected_section, cl){
+    #mat_Y_test <- mat_nov[,(size_historic+(j-1)*(update_gap)+10+1):(size_historic+j*(update_gap)+10), ]
+
+    stime <- system.time({
+    set.seed(1)
+    SECTIONS <-  sample(1:dim(mat_online)[1], size_selected_section)
+
+#     cl <- makeCluster(detectCores()) 
+#     registerDoParallel(cl)
+
+     #initialisation de la matrix 3D des MAPE
+    MAPE <- array(0, dim=c(s_max, length(SECTIONS), nbHorizons),  dimnames = list(
+                                                                              paste("s=", 1:s_max, sep=""),
+                                                                              paste("section", SECTIONS, sep=""),
+                                                                              H) )
+      
+      for(s in 1:s_max){
+        print(paste("s=", s))
+        #on garde uniquement une memoire de taille s
+          train <- mat_online[SECTIONS,,1:(nbHorizons+s)]
+          test <- mat_Y_test[SECTIONS,,1:(nbHorizons+s)]
+          
+          a <- foreach (section = icount(length(SECTIONS)), .combine='rbind', .multicombine=TRUE, .packages='e1071',
+                    .export = c('svm_build_N_predict','nbHorizons','s_per_horizon',
+                                'eps_per_horizon','cost_per_horizon','gamma_per_horizon',
+                                'svm_build_N_predict.s_opt') ) %dopar% {
+          X_train <- train[section,, ] #variables explicatives
+          X_test <- test[section,,] #variables explicatives de la test
+              
+          Y_train <- train[section,,] #variable reponse
+          Y_test_pred <- sapply(1:nbHorizons, svm_build_N_predict.s_opt, s=s)
+          n <- min( sum(!is.na(Y_test_pred))/6, sum(!is.na(test[section,,1:nbHorizons]))/6)
+          (100/n)*colSums(abs(Y_test_pred-test[section,,1:nbHorizons])/test[section,,1:nbHorizons], na.rm = TRUE)
+          }
+          
+          MAPE[s, ,  ] <- MAPE[s, , ] + a
+ 
+        }
+      
+  
+  S_per_horizon <- global_S_opt_eahcHorizon(MAPE, SECTIONS, s_max)
+  S_per_horizon
+  })[3]
+
+  return(S_per_horizon)
+   }
+   
+  
+
+```
+
+
+```{r}
+  #Constantes d'environnement
+  library(foreach)
+  library(e1071)
+  library(doParallel)
+  s_max <- 10
+  nbHorizons <- 6
+  H <- c("0h30", "1h00", "1h30", "2h00", "2h30", "3h00") 
+  load("best_param_SVM_per_horizon.RData")
+  load("result_S_sept_nov.RData")
+
+  ########################
+  #### FONCTIONS #########
+  ########################
+  
+  remove_unobs <- function(mat, nbHorizons){
+    for(i in 1:(nbHorizons-1)){
+      mat[, dim(mat)[[2]]-i+1, (i+1):nbHorizons] <- NA
+    }
+    return(mat)
+  }
+
+  #parallelisation using doParallel
+  svm_build_N_predict <- function(h){
+      model <- svm( X_train[,(nbHorizons+1):(nbHorizons+s_per_horizon[h])], Y_train[,h],
+                  kernel='radial', epsilon = eps_per_horizon[h],
+                  gamma =  gamma_per_horizon, cost = cost_per_horizon[h]) #mod?le
+      return(predict(model, X_test[,(nbHorizons+1):(nbHorizons+s_per_horizon[h])], na.action = na.exclude) )
+    }
+    
+  
+  recover_pred <- function(section, i, a, Y_pred){
+      return( a[((section-1)*update_gap+1):(section*update_gap),][i,] )
+    }
+
+  recover_pred_last_gap <- function(section, i, a, Y_pred){
+      return( a[((section-1)*nb_last_pred+section):(section*nb_last_pred+section),][i,] )
+    }
+
+###################################
+   # m�thode de pr�vision online-SVR avec possiblit� de r�ajuster les param�tres (S et SVR) avec "refitted"
+  online_caco_svr <- function(matrix, last_obs, end_prediction, size_historic, SECTIONS=SECTIONS, update_gap, s_per_horizon, s_max, size_sample, max_time_update_svr, refitted){
+    stime <- system.time({
+      
+    F <- c(last_obs+1, end_prediction) #ensemble des pas de temps du mois de novembre à prédire (1er: 1 nov 0:30)
+
+    matrix_nov <- as.data.frame(matrix[(F[1]-s_max-size_historic-10):F[2],])
+    #on construit les modèles associés à chaque h avec 10 obs. on doit donc aller chercher plus loin pour des h élevés
+  
+    cl <- makeCluster(detectCores()) 
+    registerDoParallel(cl)
+    #création matrix 3D [ section, obs, (nbHorizons) + (memoire s) +(k voisins * nbHorizons) ]
+    mat_nov <- create.Mat3D(matrix_nov, matrix, s_max, cl, 1:ncol(matrix_nov)) #s = 1 car on connait ce qu'il s'eest passé dans la training set #s_max
+
+    #forecatsing 3D matrix initialization
+    Y_pred <- array(NA, dim=c(dim(matrix)[2], nbHorizons, F[2]-F[1]+1+5),  dimnames = list(
+                                                                              dimnames(matrix)[[2]],
+                                                                              paste("prévision à",H),
+                                                                              (F[1]:(F[2]+5)
+                                                                              )))
+  
+    #paramterers of the SVR model for each horzion forecasting
+    #per horizon
+    eps_per_horizon <- rowMeans(best_param_SVM_per_horizon[[1]])
+    gamma_per_horizon <- rowMeans(best_param_SVM_per_horizon[[2]])
+    cost_per_horizon <- trunc(rowMeans(best_param_SVM_per_horizon[[3]]))
+  
+    #global parameters for s = s_global
+  
+
+    #getDoParWorkers()
+    #getDoParName()
+    #getDoParVersion()
+    iSec <- length(SECTIONS)
+  
+    #first gaps
+    {
+    for(j in 1:trunc(( (F[2]-F[1]+1) /update_gap)) ){
+      print(j)
+      #mat_online updating
+      mat_online <- mat_nov[,update_gap*(j-1) + 1:(size_historic+10),]
+      mat_online <- remove_unobs(mat_online, nbHorizons) #add NA triangle at the end of the mat
+      #mat_online[1,,] dim(mat_online) dimnames(mat_online)
+    
+      #models building and forecasting
+      a <- foreach (section = icount(iSec), .combine='rbind', .multicombine=TRUE, .packages='e1071',
+                    .export = c('svm_build_N_predict','nbHorizons','s_per_horizon',
+                                'eps_per_horizon','cost_per_horizon','gamma_per_horizon') ) %dopar% {
+      print(section) 
+      X_train <- mat_online[section,, ] #variables explicatives
+      X_test <- mat_nov[section,(size_historic+(j-1)*(update_gap)+10+1):(size_historic+j*(update_gap)+10),] #variables explicatives de la test
+              
+      Y_train <- mat_online[section,,] #variable reponse
+      sapply(1:nbHorizons, svm_build_N_predict)
+      }
+ 
+  
+      # rangement dans Y_pred #trouver un moyen plus rapide (utilisation foreach)
+      for(i in 1:update_gap){
+        repl <- t(sapply(1:iSec, recover_pred, a=a, i=i, Y_pred=Y_pred))
+        Y_pred <- with(expand.grid(a = 1:iSec, b = i:(6+i-1)), replace(Y_pred, cbind(a, b-i+1, (j-1)*update_gap+b), repl))
+      }
+      
+      print(refitted)
+      if( refitted == TRUE){
+        print("reajustement s")
+        #reajuster s eavec leanring sur historic et test sur les valeurs du gap
+        mat_Y_test <- mat_nov[,(size_historic+(j-1)*(update_gap)+10+1):(size_historic+j*(update_gap)+10), ]
+        s_per_horizon <- find_S.foreach.online (mat_online, mat_Y_test, s_max, size_sample, cl)
+        print(s_per_horizon)
+      
+        #réajustement des params SVR avec learning sur historique et prévision sur le gap (comme juste avant) / pas de cross val
+        mat_test <- mat_nov[,(size_historic+(j-1)*(update_gap)+10+1):(size_historic+j*(update_gap)+10),]
+        x_svr <- rbind(eps_per_horizon, gamma_per_horizon, cost_per_horizon)
+        res_svr <- optSVM_per_horizon.online.parallel(s_opt = s_per_horizon, maxtime = max_time_update_svr, 
+                                           size_sample, mat_online = mat_online,
+                                           mat_test = mat_test, x_svr = x_svr, focus = 15)
+        eps_per_horizon <- res_svr$EPS[,1]
+        gamma_per_horizon <- res_svr$GAMMA[,1]
+        cost_per_horizon <- res_svr$COST[,1]
+      }
+      
+    }
+    
+    
+    
+    }
+    
+    #last gap:
+    {
+    nb_last_pred <- (F[2]-F[1]+1)-j*update_gap
+    j <- j+1
+    print(j)
+    #mat_online updating
+    mat_online <- mat_nov[,update_gap*(j-1)+ 1:(size_historic+10),]
+    mat_online <- remove_unobs(mat_online, nbHorizons) #add NA triangle at the end of the mat
+    #mat_online[1,,]
+    
+    #models building and forecasting
+    a <- foreach (section = icount(iSec), .combine='rbind', .multicombine=TRUE, .packages='e1071',
+                  .export = c('svm_build_N_predict','nbHorizons','s_per_horizon',
+                              'eps_per_horizon','cost_per_horizon','gamma_per_horizon') ) %dopar% {
+          X_train <- mat_online[section,, ] #variables explicatives
+          X_test <- mat_nov[section,(dim(mat_nov)[2]-nb_last_pred):dim(mat_nov)[2],] #variables explicatives de la test
+              
+          Y_train <- mat_online[section,,] #variable reponse
+          sapply(1:nbHorizons, svm_build_N_predict)
+        }
+ 
+    # rangement dans Y_pred
+    for(i in 1:(nb_last_pred)){
+      repl <- t(sapply(1:iSec, recover_pred_last_gap, a=a, i=i, Y_pred=Y_pred))
+      Y_pred <- with(expand.grid(a = 1:iSec, b = i:(6+i-1)), replace(Y_pred, cbind(a, b-i+1, (j-1)*update_gap+b), repl))
+    }
+    
+    }
+    ###############
+    
+    
+  
+    
+    ###############
+    
+    Y_pred <- Y_pred[,,1:(F[2]-F[1]+1)]
+    print("ERROR computing")
+    list_prevision_ONLINE_SVR_S_opt <- result_APE_MAPE(Y_pred, matrix, last_obs)
+    stopCluster(cl)
+    })[3]
+    
+    print(stime)
+    
+    return( c(list_prevision_ONLINE_SVR_S_opt, stime) )
+  }
+  
+  ###############################
+
+  #exemple d'application de la fonction de pr�diction online-SVR
+  online_Bellevue_hist_30 <- online_caco_svr(matrix=Bellevue_Matrix, last_obs=2929,
+                                             end_prediction=4368,size_historic=48*30,
+                                             SECTIONS=1:dim(Bellevue_Matrix)[2], update_gap=48*7,
+                                             s_per_horizon =  c(8,8,11,12,12,12), s_max =  12, size_sample =  8 ,
+                                             max_time_update_svr = 25, refitted = TRUE
+                                             )
+  save(online_Bellevue_hist_30, file="online_Bellevue_hist_30.RData")
+  online_Bellevue_hist_30$MAPE_mean
+  
+  online_Bellevue_hist_30_refitted <- online_caco_svr(matrix=Bellevue_Matrix, last_obs=2929,
+                                             end_prediction=4368,size_historic=48*30,
+                                             SECTIONS=1:dim(Bellevue_Matrix)[2], update_gap=48*7,
+                                             s_per_horizon =  c(8,8,11,12,12,12), s_max =  12, size_sample =  15 ,
+                                             max_time_update_svr = 25, refitted = TRUE
+                                             )
+  save(online_Bellevue_hist_30_refitted, file="online_Bellevue_hist_30_refitted.RData")
+  online_Bellevue_hist_30_refitted$MAPE_mean
+  
+  
+  online_Chevire_hist_30 <- online_caco_svr(matrix=Chevire_Matrix, last_obs=2929, end_prediction=4368,
+                            size_historic=48*30, SECTIONS=1:dim(Chevire_Matrix)[2], update_gap=48*7,
+                            s_per_horizon =  c(8,9,11,12,12,12), s_max =  12, size_sample =  5 ,
+                            max_time_update_svr = 15, refitted = FALSE)
+  save(online_Chevire_hist_30, file="online_Chevire_hist_30.RData")
+  
+  online_Urban_hist_30 <- online_caco_svr(matrix=Urban_Matrix, last_obs=2929,
+                                             end_prediction=4368,size_historic=48*30,
+                                             SECTIONS=1:600, update_gap=48*7,
+                                             s_per_horizon =  c(8,8,11,12,12,12), s_max =  12, size_sample =  5 ,
+                                             max_time_update_svr = 15, refitted = FALSE)
+  save(online_Urban_hist_30, file="online_Urban_hist_30.RData")
+  
+ 
+```
