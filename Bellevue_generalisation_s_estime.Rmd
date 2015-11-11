@@ -1,0 +1,785 @@
+---
+title: "Bellevue-S_estim"
+author: "Fabien Baradel"
+date: "7 juillet 2015"
+output: html_document
+---
+
+
+```{r}
+#pour voir les erreurs
+  options(error=recover)
+  options(show.error.locations=TRUE)
+  options(warn=-1) #remove warnings
+    
+  nbHorizons <- 6
+  H <- c("0h30", "1h00", "1h30", "2h00", "2h30", "3h00")
+  #construction du mod?le pour chaque section
+    for(h in 1:nbHorizons){
+      assign(paste("model", H[h], sep = "_"), h)  
+    }
+  
+  ######## SECTIONS CIBLES #############
+  #### par niveau de difficult? #######
+  ### niveau 0:
+  difficulty_0 <- c(71, 13, 14)
+  ### niveau 1:
+  difficulty_1 <- c(77, 78, 75, 88, 1, 2)
+  ### niveau 2:
+  difficulty_2 <- c(80, 87, 111, 113)
+  ### niveau 3:
+  difficulty_3 <- c(117, 118, 128, 132, 37, 35)
+  
+  nbHorizons <- 6
+  
+  #???multicores using
+  library(doParallel)
+  cl <- makeCluster(detectCores()) 
+  registerDoParallel(cl)
+  stopCluster(cl)
+
+
+  
+   # Initialisation des variables pour la fonction 'find_S_K'
+   ##########################
+    SECTIONS <- 1:ncol(Bellevue_Matrix)#c(difficulty_0, difficulty_1, difficulty_2, difficulty_3)
+    N <- 2928 #le mois de septembre (1 -> 1440) #novembre (2929 -> 4368)
+    matrix_init <- as.data.frame(Bellevue_Matrix[,])
+    matrix <- as.data.frame(Bellevue_Matrix[1:N,SECTIONS])
+    dist <- as.matrix(dist(Bellevue_Matrix[1:N,], method = "euclidean")) #matrice des distances euclidennes entre chaque image du reseau
+    s_max <- 10
+    nbCrossVal <- 3
+    #########################
+  
+  ####################################
+  ##### ESTIMATIONS K et S ###########
+  ####################################
+  # fonction qui estime K et S par 5 cross fold validation sur la matrice d'apprentissage 'matrix'
+  # 4 sortes d'estimations nous sont renvoy?es:
+  #           -GLOBALE : retourne un K et un S pour l'ensemble des sections et des horizons
+  #           -PAR HORIZON : retourne un 6  couples (K,S) pour chaque horizon
+  #           -PAR SECTION : retourne un 'nbSection' couple (K,S) pour chaque section
+  #           -LOCALE (PAR SECTION et PAR HORIZON) : retourne un 'nbSection' X 6 couples (K,S) pour chaque section et chaque horizon
+    
+  #La fonction renvoie aussi le temps mis par la fonction pour trouver les estimateurs
+
+  find_S <- function (matrix, s_max){
+   
+    
+    stime <- system.time({
+   
+    
+    #cr?ation matrix 3D [ section, obs, (nbHorizons) + (memoire s) +(k voisins * nbHorizons) ]
+    mat <- create.Mat3D(matrix, s_max)
+    
+    
+    #cr?ation des trainings et test sets pour la cross validation
+    crossValidation <- create.trainingNtestSets_crossValidation(mat, nbCrossFoldValidation = nbCrossVal )
+    list.train <- crossValidation[[1]]
+    list.test <- crossValidation[[2]]
+    
+
+
+    
+    #r?cup?ration des k_max voisins de chaque image ? t pour chaque training et test sets:
+    for(cross in 1:nbCrossVal){#nb de cross validation
+      print(cross)
+      train <- list.train[cross][[1]]
+      test <- list.test[cross][[1]]
+      limit_train <- as.numeric(dimnames(train)[2][[1]])#num des obs de la training set
+      limit_test <- as.numeric(dimnames(test)[2][[1]])
+      #on enleve les 6 dernieres obs des limites afin de ne pas garder des voisins dont on ne connait pas l'ensemble des 6 horizons! IMPORTANT
+      limit_test <- limit_test[-(length(limit_test):(length(limit_test)-5))]
+      limit_train <- limit_train[-(length(limit_train):(length(limit_train)-5))]
+      
+      list.train[cross][[1]] <- train
+      list.test[cross][[1]] <- test
+    }
+    
+    ################################################################# LA BDD EST BONNE
+
+     #initialisation de la matrix 3D des MAPE
+    MAPE <- array(0, dim=c(s_max, length(SECTIONS), nbHorizons),  dimnames = list(
+                                                                              paste("s=", 1:s_max, sep=""),
+                                                                              paste("section", SECTIONS, sep=""),
+                                                                              H))
+    
+   
+    for(cross in 1:nbCrossVal){#nb de cross validation
+      par(mfrow=c(3,2))
+      print(paste("fold cross validation", cross))
+      #on fait le 10 cross-validation
+      
+      for(s in 1:s_max){
+        print(paste("s=", s))
+        #on garde uniquement une memoire de taille s
+          train <- list.train[[cross]][,,1:(nbHorizons+s)]
+          test <- list.test[[cross]][,,1:(nbHorizons+s)]
+        
+        for(section in 1:length(SECTIONS) ){#length(SECTIONS)
+          for(h in 1:nbHorizons ){
+            X_train <- train[section,, (nbHorizons+1):(nbHorizons+s)] #variables explicatives
+            X_test <- test[section,,(nbHorizons+1):(nbHorizons+s)] #variables explicatives de la test
+                
+            Y_train <- train[section,,h] #variable reponse
+            model <- svm( X_train, Y_train) #mod?le
+            Y_test_pred <- predict(model, X_test, na.action = na.exclude) #pr?dictions
+                   
+#           #visualisation graphique
+            #plot(as.numeric(dimnames(test)[[2]]), test[section,,h], type = 'l', main=paste(paste("Pr?vision ?", H[h]), s), xlab="Pas de temps", ylab="Vitesse en km/h")
+            #lines(as.numeric(dimnames(test)[[2]]), Y_test_pred, col='red')
+            #title(main=paste("Section", SECTIONS[section]), outer=T)
+
+                 
+            n <- min( sum(!is.na(Y_test_pred)), sum(!is.na(test[section,,h])))
+            mape <- (100/n)*sum(abs(Y_test_pred-test[section,,h])/test[section,,h], na.rm = TRUE)
+            MAPE[s, section, h ] <- MAPE[s, section, h] + mape
+          }
+        }
+      }
+    }
+  
+  
+  MAPE <- MAPE/nbCrossVal #car 'nbCrossVal' cross fold validation
+
+
+  S_global <- global_S_opt(MAPE, SECTIONS) #donne le s
+  S_per_horizon <- global_S_opt_eahcHorizon(MAPE, SECTIONS)
+  S_per_section <- global_S_opt_eahcSection(MAPE, SECTIONS)
+  local_S_opt <- local_S(MAPE, SECTIONS)
+  S_global
+  S_per_horizon
+  S_per_section
+  local_S_opt
+  })[3]
+    
+  result_S <- list("global"=S_global, "per horizon"=S_per_horizon, "per section"=S_per_section, "local"=local_S_opt, "interation time"=stime, "MAPE"=MAPE)
+
+  return(result_S)
+  }
+    
+
+  #cr?ation matrix 3D [ section, obs, (nbHorizons) + (memoire s) +(k voisins * nbHorizons) ]
+  create.Mat3D.simple <- function(matrix, matrix_init, s){
+    
+    namesRow <- as.numeric(dimnames(matrix)[[1]])
+    lim1 <- s
+    lim2 <- length(namesRow)
+    namesRow <- namesRow[lim1:lim2]
+    
+    #cr?ation matrix 3D [section, obs, (nbHorizons) + (memoire s) +(k voisins * nbHorizons) ]
+    mat <- array(NA, dim=c(ncol(matrix), length(namesRow)-1, nbHorizons+s),  dimnames =
+                                        list(paste("section", dimnames(matrix)[[2]], sep=""),
+                                            namesRow[- length(namesRow)],
+                                            c(paste("Xt+", 1:6, sep=""),
+                                            paste("Xt-", 0:(s-1), sep=""))
+                                            )
+                 )
+    for(j in 1:dim(mat)[1]){
+      print(j)
+      for(i in 1:dim(mat)[2]){ 
+        mat[j, i, 1:nbHorizons] <- matrix_init[namesRow[(i+1):(i+nbHorizons)],j] #r?cup?ration des horizons de Xt de la section j 
+        mat[j, i, (nbHorizons+1):(nbHorizons+s)] <- matrix_init[namesRow[i]:(namesRow[i]-s+1),j] #r?cup?ration de la m?moire s de la section j
+        }
+    }
+    return(mat)
+  }
+
+   
+  create.trainingNtestSets_crossValidation <- function (mat, nbCrossFoldValidation=10, s){
+    # ATTENTION: peut etre rajouter les qques valeurs
+    # on d�coupe la base de donn�es(mat) en nbCrossFoldValidation training set et nbCrossFoldValidation test set
+    f <- trunc(dim(mat)[2]*(1/nbCrossFoldValidation)) #taille des test set
+  
+    for(i in 1:nbCrossFoldValidation){
+      if(i != nbCrossFoldValidation){
+        a<-f*(i-1)+1
+        b<-f*(i)
+      } else{
+         b <- dim(mat)[2]
+         a <- dim(mat)[2]-f
+      }
+      
+    #######################
+    #creation des test set#
+    #######################
+    if(i != 1 && i!=nbCrossFoldValidation){
+      test<-mat[,a:b,]
+    }else{
+      test<-mat[,a:(b-1),] #car on a pas les horizons de la dernieres obs
+    }
+    
+    #on remplace les vitesses de la fin pour des NA seuelement dans le cas ou la test set est � la fin de la matrice
+    if(i == nbCrossFoldValidation){
+      for(k in 1:(nbHorizons-1)){
+        test[,b-k-a+1,(k+1):nbHorizons] <- NA
+      }
+    }
+    assign(paste("test",i,sep = ""),test)
+    
+    ###########################
+    #creation des training set#
+    ###########################
+    train<-mat[,-(a:b),]
+    
+    if(i == 1){
+      #enlever s obs au d�but
+      train <- train[,-(1:s),]
+    } else if(i==nbCrossFoldValidation){
+      #ajouter NA
+       train <- train[,-((a-1):(a+s-1)),]
+       for(k in 1:(nbHorizons-1)){
+        train[,a-1-k,(k+1):nbHorizons] <- NA
+       }
+      
+    } else{
+      
+      #enlver s obs et ajouter NA
+      train <- train[,-((a-1):(a+s-1)),]
+      
+      for(k in 1:(nbHorizons-1)){
+        train[,a-1-k,(k+1):nbHorizons] <- NA
+      }
+      
+    }
+    
+    assign(paste("train",i,sep = ""),train)
+    
+    }
+  
+    #creation de la liste de training set
+    list.train<-list(train1, train2)#, train3, train4)#, train5)
+                   #train6, train7, train8, train9, train10)
+    #creation de la liste de test set
+    list.test<-list(test1, test2)#, test3, test4)#, test5)
+                  #test6, test7, test8, test9, test10)
+    
+    list <- list(list.train, list.test)
+    
+    return( list)
+    }
+
+  
+  #création matrix 3D [ section, obs, (nbHorizons) + (memoire s) ] FOREACH
+  create.Mat3D <- function(matrix, matrix_init, s, cl, SECTIONS){
+    
+    namesRow <- as.numeric(dimnames(matrix)[[1]])
+    lim1 <- s
+    lim2 <- length(namesRow)
+    namesRow <- namesRow[lim1:lim2]
+    
+    #création matrix 3D [section, obs, (nbHorizons) + (memoire s) +(k voisins * nbHorizons) ]
+    mat <- array(NA, dim=c(ncol(matrix), length(namesRow)-1, nbHorizons+s),  dimnames =
+                                        list(paste("section", dimnames(matrix)[[2]], sep=""),
+                                            namesRow[- length(namesRow)],
+                                            c(paste("Xt+", 1:6, sep=""),
+                                            paste("Xt-", 0:(s-1), sep=""))
+                                            )
+                 )
+    
+    #cl <- makeCluster(detectCores())
+    library(abind)
+    acomb <- function(...) abind(..., along=3)
+    registerDoParallel(cl)
+    print("debut 3D")
+    b <- foreach (j = icount(dim(mat)[1]), .combine='acomb', .export=c('recover_horizons', 'recover_memory',
+                                                                       'matrix_init', 'namesRow', 'nbHorizons', 's')) %dopar%{
+      print(j)
+      mat[j,1:dim(mat)[2] , 1:nbHorizons] <- t(sapply(1:dim(mat)[2], recover_horizons, j=SECTIONS[j])) #récupération des horizons (1:6) de Xt de la section j
+      mat[j,1:dim(mat)[2] , (nbHorizons+1):(nbHorizons+s)] <- t(sapply(1:dim(mat)[2], recover_memory, j=SECTIONS[j])) #récupération des horizons (1:6) de Xt de la section j
+      mat[j,,]
+    }
+    mat <- aperm(b, c(3,1,2))
+    dim(mat)
+    #stopCluster(cl)
+    print("fin 3D")
+
+    return(mat)
+  }
+  
+#récupere les 6 horizons de la section Xj
+  recover_horizons<- function (j, i){
+    return( matrix_init[namesRow[(i+1):(i+nbHorizons)],j] )
+    }
+
+  recover_memory <- function(j,i){
+    return( matrix_init[namesRow[i]:(namesRow[i]-s+1),j] )
+    }
+  
+  #fonction qui renvoie le k optimal pour toutes sectiosn et tous les horizons
+  global_S_opt <- function (MAPE, SECTIONS){
+    error_s <- matrix(0, s_max)
+    rownames(error_s) <- paste("s=", 1:s_max)
+
+    for(section in 1:dim(MAPE)[[2]]){ 
+      for(h in 1:nbHorizons){
+        error_s[] <- error_s[] + MAPE[,section,h]
+      }
+    }
+    error_s[] <- error_s[]/(length(SECTIONS)*nbHorizons)
+    
+    par(mfrow=c(1,1))
+    inds = which(error_s == min(error_s), arr.ind=TRUE)
+    s_opt <- inds[1]
+    plot(1:s_max,  error_s, main= "MAPE en fonction de s (estimation globale)", ylab = "MAPE en %", xlab = paste(paste("S (optimum: S=", s_opt), ")"), type='l')
+    return(s_opt)
+  }
+  
+  #fonction qui renvoie le k optimal pour toutes sectiosn et tous les horizons
+  global_S_opt_eahcHorizon <- function (MAPE, SECTIONS, s_max){
+    error_s <- array(0, c(s_max, nbHorizons), dimnames = list( paste("s=", 1:s_max),
+                                                                      H))
+    for(s in 1:s_max){
+      for(section in 1:dim(MAPE)[[2]]){
+        error_s[s,] <- (MAPE[s, section, ])+ error_s[s,]
+
+      }
+    }
+    error_s <- error_s/dim(MAPE)[[2]]
+    
+    s_opt <- matrix(0, 1, nbHorizons)
+    rownames(s_opt) <- c("s opt")
+    colnames(s_opt) <- H
+    
+    for(h in 1:nbHorizons){
+      inds = which(error_s[,h] == min(error_s[,h]), arr.ind=TRUE)
+      s_opt[1,h] <- inds[1]
+    }
+    
+    par(mfrow=c(3,2))
+    for(h in 1:nbHorizons){
+      plot(1:s_max,  error_s[,h], main= paste("MAPE en fonction de s ?", H[h]), ylab = "MAPE en %", xlab = paste( paste("S (optimum: S=", s_opt[1,h]), ")"), type='l')
+    }
+    
+    return(s_opt)
+  }
+  
+  #fonction qui renvoie le k optimal pour toutes sectiosn et tous les horizons
+  global_S_opt_eahcSection <- function (MAPE, SECTIONS){
+    error_s <- array(0, c(s_max, length(SECTIONS)), dimnames = list( paste("s=", 1:s_max),
+                                                                          SECTIONS))
+    
+    for(s in 1:s_max){
+      for(section in 1:dim(MAPE)[[3]]){
+        error_s[s, ] <- (MAPE[s, ,section ])+ error_s[s,]
+      }
+    }
+    error_s <- error_s/dim(MAPE)[[3]]
+
+    
+    s_opt <- matrix(0, nrow=1, ncol = length(SECTIONS) )
+    rownames(s_opt) <- c("s opt")
+    colnames(s_opt) <- SECTIONS
+    
+    for(section in 1:length(SECTIONS)){
+      inds = which(error_s[,section] == min(error_s[,section]), arr.ind=TRUE)
+      s_opt[1,section] <- inds[1]
+    }
+    
+    par(mfrow=c(3,2))
+    for(section in 1:length(SECTIONS)){
+      plot(1:s_max,  error_s[,section], main= paste("MAPE en fonction de s: section", SECTIONS[section]), ylab = "MAPE en %", xlab = paste( paste("S (optimum: S=", s_opt[1,section]), ")"), type='l')
+  }
+    return(s_opt)
+  }
+
+  
+  #fonction qui renvoie le k optimal pour toutes sectiosn et tous les horizons
+  local_S <- function (MAPE, SECTIONS){
+    S_per_section_per_horizon <- array(0, dim = c(length(SECTIONS), 1, nbHorizons), dimnames = list(SECTIONS,
+                                                                                                      c("s="),
+                                                                                                      H))
+    for(section in 1:length(SECTIONS)){
+      for(h in 1:nbHorizons){
+        inds = which(MAPE[,section, h] == min(MAPE[,section, h]), arr.ind=TRUE)
+        S_per_section_per_horizon[section, 1, h] <- inds[1]
+      }
+    }
+    
+    return(S_per_section_per_horizon)
+  }
+  
+  
+  
+  
+  #create NA triangle at the end (Xt+1... Xt+6)
+  NA_triangle_last_obs <- function(mat, nbHorizons){
+    for(i in 1:(nbHorizons-1)){
+      mat[dim(mat)[[1]]-i+1, (i+1):nbHorizons] <- NA
+    }
+    return(mat)
+  }
+  
+``` 
+  
+
+
+
+```{r}
+  
+  
+  
+####################################################################
+######## APPRENTISSAGE SUR SEPT/OCT, PREVISION SUR NOVEMBRE ########
+####################################################################
+  # First step: trouver les couples (K,S)
+  # 2nd step: optimiser la fonction svm
+  # 3d step: Boosting
+  # 4th step: construction des modeles sur spt/oct et prevision de novembre (4 diff?rentes approches)
+
+  #Dans un premier temps, on saute les ?tapes 2 et 3. De plus on ne fera de la pr?vision uniquement en fonction de deux approches: global et par horizon
+  
+  #####################
+  #### 1st STEP #######
+  #####################
+  
+  #estimation des couples (S,K) par 4 diff?rentes approches
+  result_S_sept_nov <- find_S(matrix, s_max)
+  save(result_S_sept_nov, file="result_S_sept_nov.RData")
+  global_S_opt(result_S_sept_nov$MAPE, SECTIONS)
+  global_S_opt_eahcHorizon(result_S_sept_nov$MAPE, SECTIONS)
+  
+  #####################
+  #### 2nd STEP #######
+  #####################
+  n_sample <- 7 #taille de l'?chantillon
+  
+  best_param_SVM_global <- optSVM_global(n_sample, result_S_sept_nov$global,  maxtime = 60*(nbHorizons*.6)*n_sample) #0.77 *nbcross* maxtime
+  save(best_param_SVM_global, file="best_param_SVM_global.RData")
+  
+  best_param_SVM_per_horizon <- optSVM_per_horizon(n_sample, result_S_sept_nov$`per horizon`, 60*(.6)*n_sample)# nbcross* maxtime*nbHorizons
+  save(best_param_SVM_per_horizon, file="best_param_SVM_per_horizon.RData")
+
+  #####################
+  #### 3th STEP #######
+  #####################
+  
+  # BOOSTING: A FAIRE
+  
+  #####################
+  #### 4th STEP #######
+  #####################
+  
+  #Initialisation des variables
+  last_obs <- 2929
+  F <- c(last_obs, 4368) #ensemble des pas de temps du mois de novembre (2930-4368) on inclue le 1 nov 0:00 dans training set
+  s_max <- max(result_S_sept_nov$local[,1,]) #maximum dans la table des r?sultats locaux
+
+  matrix_Forescating <- as.data.frame(Bellevue_Matrix[(F[1]-s_max+1):F[2],]) #car on veut pr?voir d?s la 2881?me observation
+  
+    
+  #cr?ation matrix 3D [ section, obs, (nbHorizons) + (memoire s) ]
+  mat_Forescating <- create.Mat3D(matrix_Forescating, s_max) #s = 1 car on connait ce qu'il s'eest pass? dans la training set
+  #mat_init <- create.Mat3D(matrix_init, s_max)
+
+  
+  #creation training set:
+  mat_train <- create.Mat3D(as.data.frame(Bellevue_Matrix[1:F[1],]),s_max)
+  
+  
+  result_APE_MAPE <- function(Y_pred, matrix, last_obs){
+      F <- c( last_obs+1 , last_obs+dim(Y_pred)[3] )
+      
+      #1 ERROR:
+      ERROR <- array(NA, dim=c(dim(Y_pred)[1], nbHorizons, F[2]-F[1]+1),  dimnames = list(
+                                                                              dimnames(Y_pred)[[1]],
+                                                                              paste("pr?vision ?",H),
+                                                                              (F[1]):F[2]
+                                                                              ))
+      for( section in 1:dim(ERROR)[1] ){
+        for(i in 1:dim(ERROR)[3]){
+          ERROR[section, , i] <- matrix[last_obs+i, section] - Y_pred[section, , i] 
+        }
+      }
+      
+      #2 RELATIVE ERROR:
+      ERROR_relative <- array(NA, dim=c(dim(Y_pred)[1], nbHorizons, F[2]-F[1]+1),  dimnames = list(
+                                                                              dimnames(Y_pred)[[1]],
+                                                                              paste("prévision à",H),
+                                                                              (F[1]):F[2]
+                                                                              ))
+      for( section in 1:dim(ERROR)[1] ){
+        for(i in 1:dim(ERROR)[[3]]){
+          ERROR_relative[section, , i] <- (ERROR[section, , i] / matrix[last_obs+i, section] ) * 100
+        }
+      }
+      
+      #3 APE
+      APE <- array(NA, dim=c(dim(Y_pred)[1], nbHorizons, F[2]-F[1]+1),  dimnames = list(
+                                                                              dimnames(Y_pred)[[1]],
+                                                                              paste("prévision à",H),
+                                                                              (F[1]):F[2]
+                                                                              ))
+      for( section in 1:dim(APE)[1] ){
+        for(i in 1:dim(APE)[[3]]){
+          APE[section, , i] <- abs( ERROR_relative[section, , i] )
+        }
+      }
+      
+      #4 MPE GLOBALE:
+      MPE_global <- matrix(NA, nrow= nbHorizons, ncol = F[2]-F[1]+1,  dimnames = list(paste("prévision à",H),
+                                                                                       (F[1]):F[2]))
+      for(i in 1:ncol(MPE_global)){
+        for(h in 1:nbHorizons){
+          MPE_global[h,i] <- mean(ERROR_relative[,h,i], na.rm = TRUE)
+        }
+      }
+ 
+      #5 MPE LOCAL:
+      MPE_local <- matrix(0, dim(Y_pred)[1], nbHorizons, dimnames = list( dimnames(Y_pred)[[1]], H))
+      for(section in 1: dim(Y_pred)[1]){
+        for(h in 1:nbHorizons){
+          MPE_local[section, h] <- mean(ERROR_relative[section, h, ], na.rm = TRUE) 
+        }
+      }
+ 
+      #6 MAPE GLOBAL:
+      MAPE_global <- matrix(NA, nrow= nbHorizons, ncol = F[2]-F[1]+1,  dimnames = list(paste("pr?vision ?",H),
+                                                                  (F[1]):F[2]))
+      for(i in 1:ncol(MAPE_global)){
+        for(h in 1:nbHorizons){
+          MAPE_global[h,i] <- mean(APE[,h,i], na.rm = TRUE)
+        }
+      }                                                                 
+ 
+ 
+      #7 MAPE LOCAL:
+      MAPE_local <- matrix(0, dim(Y_pred)[1], nbHorizons, dimnames = list( dimnames(Y_pred)[[1]], H))
+      for(section in 1: dim(Y_pred)[1]){
+        for(h in 1:nbHorizons){
+          MAPE_local[section, h] <- mean(APE[section, h, ], na.rm = TRUE) 
+        }
+      }
+ 
+      #8 MAPE MEAN
+      MAPE_mean <- 1:nbHorizons
+      for(h in 1:nbHorizons){
+        MAPE_mean[h] <- mean(MAPE_global[h,], na.rm = T)
+      }
+    
+      #9 RMSE GLOBAL:
+      RMSE_global <- matrix(NA, nrow= nbHorizons, ncol = F[2]-F[1]+1,  dimnames = list(paste("pr?vision ?",H),
+                                                                  (F[1]):F[2]))
+      for(i in 1:ncol(RMSE_global)){
+        for(h in 1:nbHorizons){
+          RMSE_global[h,i] <- sqrt(mean(ERROR[,h,i]^2, na.rm = TRUE))
+        }
+      } 
+      
+      #10 RMSE LOCAL:
+      RMSE_local <- matrix(0, dim(Y_pred)[1], nbHorizons, dimnames = list( dimnames(Y_pred)[[1]], H))
+      for(section in 1: dim(Y_pred)[1]){
+        for(h in 1:nbHorizons){
+          RMSE_local[section, h] <- sqrt(mean(ERROR[section, h, ]^2, na.rm = TRUE)) 
+        }
+      }
+      
+      #11 RMSE MEAN
+      RMSE_mean <- 1:nbHorizons
+      for(h in 1:nbHorizons){
+        RMSE_mean[h] <- mean(RMSE_global[h,], na.rm = T)
+      }
+ 
+   return(list("Y_pred" =Y_pred, "ERROR"=ERROR, "relative_ERROR"=ERROR_relative, "APE"=APE, "MPE_global"=MPE_global,
+               "MPE_local"=MPE_local, "MAPE_global"=MAPE_global,
+               "MAPE_local"=MAPE_local, "MAPE_mean"= MAPE_mean,
+               "RMSE_global"=RMSE_global, "RMSE_local"=RMSE_local,
+               "RMSE_mean"=RMSE_mean)
+          )
+  }
+                              ######################
+                              ## APPROCHE GLOBALE ##
+                              ######################
+  {
+   s_global <- result_S_sept_nov$global[1]
+
+  #initialisation de la matrix 3D des pr?visions
+  Y_pred <- array(NA, dim=c(dim(mat_Forescating)[1], nbHorizons, F[2]-F[1]),  dimnames = list(
+                                                                              dimnames(mat_Forescating)[[1]],
+                                                                              paste("pr?vision ?",H),
+                                                                              (F[1]+1):F[2]
+                                                                              ))
+  
+ 
+    train <- mat_train[,,1:(nbHorizons+s_global)]
+    test <- mat_Forescating[,,1:(nbHorizons+s_global)]
+        
+    eps <- mean(best_param_SVM_global[[1]])
+    C <- trunc(mean(best_param_SVM_global[[3]]))
+    gam <- mean(best_param_SVM_global[[2]])
+    #pr?visions
+        for(section in 1:dim(mat_Forescating)[1]){ #dim(mat_Forescating)[1]
+          print(paste("section",section))
+            for(h in 1:nbHorizons ){
+              print(paste("h",h))
+              X_train <- train[section,, (nbHorizons+1):(nbHorizons+s_per_horizon)] #variables explicatives
+              X_test <- test[section,,(nbHorizons+1):(nbHorizons+s_per_horizon)] #variables explicatives de la test
+                
+              Y_train <- train[section,,h] #variable reponse
+              model <- svm( X_train, Y_train, cost =  C, 
+                            epsilon = eps,
+                            gamma = gam, kernel= 'radial') #mod?le
+              
+              Y_pred[section, h, (h:dim(Y_pred)[[3]]) ] <- predict(model, X_test, na.action = na.exclude)[1:(F[2]-F[1]-h+1)] #pr?dictions ###ATTENTION AUX OBS, S premieres modifier
+
+              }
+        }
+  
+
+  # Y_pred <- list_prevision_globale$Y_pred
+ 
+  
+
+  
+ list_prevision_globale_S_opt <- result_APE_MAPE(Y_pred)
+ list_prevision_globale_S_opt$MAPE[1:5,]
+ save(list_prevision_globale_S_opt, file="list_prevision_globale_S_opt.RData")
+ load("list_prevision_globale_S_opt.RData")
+ }
+ 
+                      ##########################
+                      ## APPROCHE PAR HORIZON ##
+                      ##########################
+  
+   s_per_horizon <- result_S_sept_nov$`per horizon`[1,]
+   eps_per_horizon <- rowMeans(best_param_SVM_per_horizon[[1]])
+   gamma_per_horizon <- rowMeans(best_param_SVM_per_horizon[[2]])
+   cost_per_horizon <- trunc(rowMeans(best_param_SVM_per_horizon[[3]]))
+   
+  #initialisation de la matrix 3D des pr?visions
+  Y_pred <- array(NA, dim=c(dim(mat_Forescating)[1], nbHorizons, F[2]-F[1]),  dimnames = list(
+                                                                              dimnames(mat_Forescating)[[1]],
+                                                                              paste("pr?vision ?",H),
+                                                                              (F[1]+1):F[2]
+                                                                              ))
+  
+  
+        
+    train <- mat_train[,,1:(nbHorizons+s_max)]
+    test <- mat_Forescating[,,1:(nbHorizons+s_max)]
+        
+   #2500:(last_obs-10)
+    #pr?visions     
+        for(section in 1:10){ #dim(mat_Forescating)[1]
+          print(paste("section",section))
+            for(h in 1:nbHorizons ){
+              print(paste("h",h))
+              X_train <- train[section,, (nbHorizons+1):(nbHorizons+s_per_horizon)] #variables explicatives
+              X_test <- test[section,,(nbHorizons+1):(nbHorizons+s_per_horizon)] #variables explicatives de la test
+                
+              Y_train <- train[section,,h] #variable reponse
+              model <- svm( X_train, Y_train, cost =  cost_per_horizon[[h]], 
+                            epsilon = eps_per_horizon[[h]],
+                            gamma = gamma_per_horizon[[h]], kernel= 'radial') #mod?le
+              
+              Y_pred[section, h, (h:dim(Y_pred)[[3]]) ] <- predict(model, X_test, na.action = na.exclude)[1:(F[2]-F[1]-h+1)] #pr?dictions ###ATTENTION AUX OBS, S premieres modifier
+
+              }
+        }
+  
+ 
+ list_prevision_per_horizon_S_opt <- result_APE_MAPE(Y_pred, F[1])
+ list_prevision_per_horizon_S_opt$MAPE[3:4,]
+ save(list_prevision_per_horizon_S_opt, file="list_prevision_per_horizon_S_opt.RData")
+load("list_prevision_per_horizon_S_opt.RData")
+ plot(3000:3300, Bellevue_Matrix[3000:3300,4], type='l')
+ lines(3000:3300, list_prevision_per_horizon_S_opt$Y_pred[4,1,(3000-2929):(3300-2929)], col='red')
+  
+#   
+#                       
+ ######################################
+ #### VISU MAPE ENTRE 4 APPROCHES #####
+ ######################################
+
+  par(mfrow=c(1,1))
+  plot(30*(1:nbHorizons), list_prevision_globale_S_opt$MAPE_mean, type = 'l', main="MAPE LOCAL moyen sur Bellevue avec plusieurs approches de s?lection de S ", xlab="Horizon de pr?vision (en min)", ylab="MAPE (en %)" )
+ # lines(30*(1:nbHorizons), list_prevision_per_section_S_opt$MAPE_mean, col='green')
+  lines(30*(1:nbHorizons), list_prevision_per_horizon_S_opt$MAPE_mean, col='blue')
+ # lines(30*(1:nbHorizons), list_prevision_local_S_opt$MAPE_mean, col='red')
+
+ 
+ legend(120,2, # places a legend at the appropriate place 
+        c("globale", "par horizon"), # puts text in the legend
+        lty=c(1,1), # gives the legend appropriate symbols (lines)
+        lwd=c(2.5,2.5),col=c("black", "green"))
+ 
+```
+
+
+
+FONCTION POUR ACO QUI RENVOIE L'ERREUR ASSOCIEE
+```{r}
+ 
+ error_SVM_global <- function(list.train, list.test, cross, s, eps, gamma, cost, FOCUS_SECTIONS){
+   train <- list.train[[cross]][,,1:(nbHorizons+s)]
+   test <- list.test[[cross]][,,1:(nbHorizons+s)]
+   mape <- 0
+   for(section in FOCUS_SECTIONS){ #FOCUS_SECTIONS
+    for(h in 1:nbHorizons ){ #nbHorizons
+     print(paste(paste("section", section), H[h]))
+                
+     X_train <- train[section,, (nbHorizons+1):(nbHorizons+s)] #variables explicatives
+     X_test <- test[section,,(nbHorizons+1):(nbHorizons+s)] #variables explicatives de la test
+              
+     Y_train <- train[section,,h] #variable reponse
+     model <- svm( X_train, Y_train, kernel = 'radial', cost = cost, epsilon = eps, gamma = gamma) #mod?le
+     Y_test_pred <- predict(model, X_test, na.action = na.exclude) #pr?dictions
+                 
+     n <- min( sum(!is.na(Y_test_pred)), sum(!is.na(test[section,,h])))
+     mape_h <- (100/n)*sum(abs(Y_test_pred-test[section,,h])/test[section,,h], na.rm = TRUE)
+     mape <- mape + mape_h
+     print(mape_h)
+    }
+   }
+   mape <- mape/(nbHorizons*length(FOCUS_SECTIONS)) #(length(SECTIONS)*nbHorizons))
+   print(mape)
+   return(mape)
+ }
+ 
+error_SVM_global(list.train, list.test, cross, s, 0.005, 0.1, 10)
+ 
+
+ error_SVM_per_horizon <- function(list.train, list.test, cross, s, eps, gamma, cost, FOCUS_SECTIONS, h){
+   train <- list.train[[cross]][,,1:(nbHorizons+s)]
+   test <- list.test[[cross]][,,1:(nbHorizons+s)]
+   mape <- 0
+   for(section in FOCUS_SECTIONS){ #FOCUS_SECTIONS
+     print(paste(paste("section", section), H[h]))
+                
+     X_train <- train[section,, (nbHorizons+1):(nbHorizons+s)] #variables explicatives
+     X_test <- test[section,,(nbHorizons+1):(nbHorizons+s)] #variables explicatives de la test
+              
+     Y_train <- train[section,,h] #variable reponse
+     model <- svm( X_train, Y_train, kernel = 'radial', cost = cost, epsilon = eps, gamma = gamma) #mod?le
+     Y_test_pred <- predict(model, X_test, na.action = na.exclude) #pr?dictions
+                 
+     n <- min( sum(!is.na(Y_test_pred)), sum(!is.na(test[section,,h])))
+     mape_h <- (100/n)*sum(abs(Y_test_pred-test[section,,h])/test[section,,h], na.rm = TRUE)
+     mape <- mape_h + mape
+     print(mape_h)
+   }
+   mape <- mape/(length(FOCUS_SECTIONS)) 
+  
+   print(mape)
+   return(mape)
+ } 
+ 
+ 
+ ########## PB avec boosting ## param maxtime ????????????????????!!!!!!!!!!!!!!!!!!!!!!!!!
+ model <- wsvm( X_train[-which(is.na(Y_train)),], Y_train[-which(is.na(Y_train))], c.n = rep(1/length(Y_train[-which(is.na(Y_train))]), length(Y_train[-which(is.na(Y_train))])))
+
+ 
+ 
+ 
+svm.data <- simul.wsvm(set.seeds = 123)
+X <- svm.data$X
+Y <- svm.data$Y
+new.X <- svm.data$new.X
+new.Y <- svm.data$new.Y
+
+# run Weighted K-means clustering SVM with boosting algorithm
+model <- wsvm(X, Y, c.n = rep(1/ length(Y),length(Y)))
+    
+```
+
+
